@@ -35,14 +35,14 @@ export default async function ListingDetailPage({
   }
 
   const listing = data[0]
-  const item = listing.items as {
-    id: string
-    name: string
-    category: string
-    grade: string
-    state: string
-    serial_number: string | null
-  }
+  const item = listing.items as unknown as {
+  id: string
+  name: string
+  category: string
+  grade: string
+  state: string
+  serial_number: string | null
+}
 
   return (
     <main className="max-w-3xl mx-auto p-8">
