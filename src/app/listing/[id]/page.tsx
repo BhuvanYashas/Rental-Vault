@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { RentButton } from '@/components/RentButton'
-import { ReturnButton } from '@/components/ReturnButton'
+import RentButton from '@/components/RentButton'
+
+
+export const dynamic = 'force-dynamic'
 
 export default async function ListingDetailPage({
   params,
@@ -36,13 +38,13 @@ export default async function ListingDetailPage({
 
   const listing = data[0]
   const item = listing.items as unknown as {
-  id: string
-  name: string
-  category: string
-  grade: string
-  state: string
-  serial_number: string | null
-}
+    id: string
+    name: string
+    category: string
+    grade: string
+    state: string
+    serial_number: string | null
+  }
 
   return (
     <main className="max-w-3xl mx-auto p-8">
@@ -116,18 +118,32 @@ export default async function ListingDetailPage({
             deposit={listing.deposit}
           />
         ) : item.state === 'RENTED' ? (
-          <ReturnButton listingId={listing.id} itemId={item.id} />
-        ) : (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
             <p className="text-xs font-mono uppercase tracking-widest text-amber-700 mb-1">
-              Status
+              Currently rented
+            </p>
+            <p className="text-neutral-900 font-medium">
+              This item is out on rental.
+            </p>
+            <p className="text-sm text-neutral-500 mt-1">
+              Returns are processed from{' '}
+              <Link
+                href="/my-rentals"
+                className="underline hover:text-neutral-900"
+              >
+                My Rentals
+              </Link>{' '}
+              once the rental period ends.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-5">
+            <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-1">
+              Unavailable
             </p>
             <p className="text-neutral-900 font-medium">
               This item is currently{' '}
               <span className="font-mono">{item.state}</span>.
-            </p>
-            <p className="text-sm text-neutral-500 mt-1">
-              It will return to the vault once the rental ends.
             </p>
           </div>
         )}

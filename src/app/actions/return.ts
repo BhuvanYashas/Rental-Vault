@@ -3,13 +3,28 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-const TEST_OPERATOR_ID = '00000000-0000-0000-0000-000000000001'
-
 export async function returnItem(
   listingId: string,
-  itemId: string
+  itemId: string,
+  photoUrl: string | null,
+  note: string | null,
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { error: 'You must be signed in' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'operator')
+    return { error: 'Only vault operators can process returns' }
 
   const { data: item, error: fetchError } = await supabase
     .from('items')
@@ -17,15 +32,10 @@ export async function returnItem(
     .eq('id', itemId)
     .single()
 
-  if (fetchError || !item) {
-    return { error: 'Item not found' }
-  }
-
-  if (item.state !== 'RENTED') {
+  if (fetchError || !item) return { error: 'Item not found' }
+  if (item.state !== 'RENTED')
     return { error: `Item is ${item.state}, cannot return` }
-  }
 
-  // Find the active transaction for this item's listing
   const { data: txn, error: txnError } = await supabase
     .from('transactions')
     .select('id')
@@ -35,39 +45,36 @@ export async function returnItem(
     .limit(1)
     .single()
 
-  if (txnError || !txn) {
+  if (txnError || !txn)
     return { error: 'No active rental found for this item' }
-  }
 
-  // 1. Mark the transaction complete
   const { error: updateTxnError } = await supabase
     .from('transactions')
     .update({ status: 'RETURNED' })
     .eq('id', txn.id)
 
-  if (updateTxnError) {
-    return { error: updateTxnError.message }
-  }
+  if (updateTxnError) return { error: updateTxnError.message }
 
-  // 2. Flip the item back to IN_VAULT
   const { error: updateItemError } = await supabase
     .from('items')
     .update({ state: 'IN_VAULT' })
     .eq('id', itemId)
 
-  if (updateItemError) {
-    return { error: updateItemError.message }
-  }
+  if (updateItemError) return { error: updateItemError.message }
 
-  // 3. Log the custody event
+  const trimmed = note?.trim()
   await supabase.from('custody_events').insert({
     item_id: itemId,
     state: 'IN_VAULT',
-    actor_id: TEST_OPERATOR_ID,
-    notes: 'Returned to vault, escrow released',
+    actor_id: user.id,
+    notes: trimmed
+      ? `Returned to vault — ${trimmed}`
+      : 'Returned to vault, escrow released',
+    photo_url: photoUrl,
   })
 
   revalidatePath('/')
+  revalidatePath('/my-rentals')
   revalidatePath(`/listing/${listingId}`)
 
   return {}
