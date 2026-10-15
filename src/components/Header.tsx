@@ -60,12 +60,7 @@ export default async function Header() {
               >
                 Sign in
               </Link>
-              <Link
-                href="/login?mode=signup"
-                className="bg-neutral-900 text-white px-3 py-1.5 rounded hover:bg-neutral-800"
-              >
-                Sign up
-              </Link>
+              
             </>
           )}
         </nav>

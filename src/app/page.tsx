@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ListingCard } from '@/components/ListingCard'
 import type { Listing } from '@/lib/types'
@@ -36,25 +35,21 @@ export default async function Home() {
 
   return (
     <main className="max-w-5xl mx-auto p-8">
-      <header className="mb-10 flex items-start justify-between">
-  <div>
-    <h1 className="text-4xl font-bold tracking-tight text-neutral-900">
-      Rental Vault
-    </h1>
-    <p className="text-neutral-500 mt-2">
-      Verified items. Escrow protected. Walk-to-vault.
-    </p>
-  </div>
-  <Link
-    href="/my-rentals"
-    className="text-sm font-medium bg-neutral-900 text-white rounded-lg px-4 py-2 hover:bg-neutral-800 transition"
-  >
-    My Rentals
-  </Link>
-</header>
+      <header className="mb-10">
+        <p className="text-xs font-mono uppercase tracking-widest text-neutral-700 mb-2">
+          Neighbourhood vault · Bengaluru
+        </p>
+        <h1 className="text-4xl font-bold tracking-tight text-neutral-900">
+          Idle goods, held in trust.
+        </h1>
+        <p className="text-neutral-700 mt-3 max-w-xl">
+          Verified items. Escrow protected. Walk-to-vault. Rent durable goods
+          from a trusted hub in your ward — or earn from what you already own.
+        </p>
+      </header>
 
       {(!listings || listings.length === 0) ? (
-        <div className="text-center py-20 text-neutral-400">
+        <div className="text-center py-20 text-neutral-600">
           <p>No listings yet.</p>
           <p className="text-sm mt-2">
             Insert a row into the <code>listings</code> table to see it here.

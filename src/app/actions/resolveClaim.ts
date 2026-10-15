@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 export async function resolveClaim(
   claimId: string,
+  resolution: 'VAULT_WINS' | 'RENTER_WINS',
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
 
@@ -37,7 +38,12 @@ export async function resolveClaim(
 
   const { error: updateError } = await supabase
     .from('claims')
-    .update({ status: 'RESOLVED' })
+    .update({
+      status: 'RESOLVED',
+      resolution,
+      resolved_by: user.id,
+      resolved_at: new Date().toISOString(),
+    })
     .eq('id', claimId)
 
   if (updateError) return { error: updateError.message }

@@ -56,11 +56,11 @@ export default async function OperatorPage() {
 
   // Existing claims
   const { data: claims } = await supabase
-    .from('claims')
-    .select(
-      'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at',
-    )
-
+  .from('claims')
+  .select(
+    'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at',
+  )
+  
   const claimsByTxn = new Map(
     (claims ?? []).map((c) => [c.transaction_id, c]),
   )

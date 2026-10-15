@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import OpenClaimForm from './OpenClaimForm'
 import ResolveClaimButton from './ResolveClaimButton'
+import PhotoLightbox from './PhotoLightbox'
 
 type Claim = {
   id: string
@@ -11,6 +12,8 @@ type Claim = {
   status: string
   dispute_reason: string | null
   disputed_at: string | null
+  resolution: string | null
+  resolved_at: string | null
 } | null
 
 export default function ReturnedRentalRow({
@@ -37,14 +40,15 @@ export default function ReturnedRentalRow({
   claim: Claim
 }) {
   const [showForm, setShowForm] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
- const photoOptions: { url: string; label: string; createdAt: string }[] = []
-if (intakePhoto) {
-  photoOptions.push({ url: intakePhoto, label: 'Intake', createdAt: startDate })
-}
-if (returnPhoto) {
-  photoOptions.push({ url: returnPhoto, label: 'Return', createdAt: endDate })
-}
+  const photoOptions: { url: string; label: string; createdAt: string }[] = []
+  if (intakePhoto) {
+    photoOptions.push({ url: intakePhoto, label: 'Intake', createdAt: startDate })
+  }
+  if (returnPhoto) {
+    photoOptions.push({ url: returnPhoto, label: 'Return', createdAt: endDate })
+  }
 
   return (
     <div className="bg-white border border-neutral-200 rounded-xl p-5">
@@ -66,34 +70,53 @@ if (returnPhoto) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {intakePhoto && (
-          <div>
-            <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-1">
-              Intake
-            </p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={intakePhoto}
-              alt="Intake"
-              className="w-full h-28 object-cover rounded-lg border border-neutral-200"
-            />
+      {(intakePhoto || returnPhoto) && (
+        <button
+          type="button"
+          onClick={() => setLightboxOpen(true)}
+          className="w-full text-left mb-4 group"
+        >
+          <div className="grid grid-cols-2 gap-3 group-hover:opacity-90 transition">
+            {intakePhoto && (
+              <div>
+                <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-1">
+                  Intake
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={intakePhoto}
+                  alt="Intake"
+                  className="w-full h-28 object-cover rounded-lg border border-neutral-200"
+                />
+              </div>
+            )}
+            {returnPhoto && (
+              <div>
+                <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-1">
+                  Return
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={returnPhoto}
+                  alt="Return"
+                  className="w-full h-28 object-cover rounded-lg border border-neutral-200"
+                />
+              </div>
+            )}
           </div>
-        )}
-        {returnPhoto && (
-          <div>
-            <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-1">
-              Return
-            </p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={returnPhoto}
-              alt="Return"
-              className="w-full h-28 object-cover rounded-lg border border-neutral-200"
-            />
-          </div>
-        )}
-      </div>
+          <p className="text-xs font-mono uppercase tracking-widest text-amber-700 mt-2">
+            Click to view full size
+          </p>
+        </button>
+      )}
+
+      <PhotoLightbox
+        open={lightboxOpen}
+        intakeUrl={intakePhoto}
+        returnUrl={returnPhoto}
+        itemName={itemName}
+        onClose={() => setLightboxOpen(false)}
+      />
 
       {claim ? (
         <div className="space-y-3">
@@ -123,6 +146,18 @@ if (returnPhoto) {
                   Renter dispute
                 </p>
                 <p className="text-sm text-red-800">{claim.dispute_reason}</p>
+              </div>
+            )}
+            {claim.status === 'RESOLVED' && claim.resolution && (
+              <div className="mt-3 pt-3 border-t border-emerald-200">
+                <p className="text-xs font-mono uppercase tracking-widest text-emerald-700 mb-1">
+                  Outcome
+                </p>
+                <p className="text-sm text-emerald-900">
+                  {claim.resolution === 'VAULT_WINS'
+                    ? `Ruled for vault — renter charged ₹${claim.damage_amount}`
+                    : 'Ruled for renter — no charge'}
+                </p>
               </div>
             )}
           </div>

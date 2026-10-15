@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ReturnButton from '@/components/ReturnButton'
-import DisputeClaimForm from '@/components/DisputeClaimForm'
 import DisputeClaimButton from '@/components/DisputeClaimButton'
 
 export const dynamic = 'force-dynamic'
@@ -46,13 +45,12 @@ export default async function MyRentalsPage() {
     )
   }
 
-  // Fetch claims for these transactions
   const txnIds = (data ?? []).map((t) => t.id)
   const { data: claims } = txnIds.length
     ? await supabase
         .from('claims')
         .select(
-          'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at',
+          'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at',
         )
         .in('transaction_id', txnIds)
     : { data: [] }
@@ -241,9 +239,7 @@ function ClaimBanner({ claim }: { claim: any }) {
   }
 
   return (
-    <div
-      className={`mt-4 pt-4 border-t border-neutral-100`}
-    >
+    <div className="mt-4 pt-4 border-t border-neutral-100">
       <div
         className={`rounded-lg p-4 border ${
           colorByStatus[claim.status] ?? 'bg-neutral-50 border-neutral-200'
@@ -266,6 +262,18 @@ function ClaimBanner({ claim }: { claim: any }) {
               Your dispute
             </p>
             <p className="text-sm text-red-800">{claim.dispute_reason}</p>
+          </div>
+        )}
+        {claim.status === 'RESOLVED' && claim.resolution && (
+          <div className="mt-3 pt-3 border-t border-emerald-200">
+            <p className="text-xs font-mono uppercase tracking-widest text-emerald-700 mb-1">
+              Outcome
+            </p>
+            <p className="text-sm text-emerald-900">
+              {claim.resolution === 'VAULT_WINS'
+                ? `Charged ₹${claim.damage_amount} to your escrow`
+                : 'No charge — resolved in your favor'}
+            </p>
           </div>
         )}
         {claim.status === 'OPEN' && (
