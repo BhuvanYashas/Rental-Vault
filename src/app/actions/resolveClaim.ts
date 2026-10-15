@@ -25,15 +25,45 @@ export async function resolveClaim(
     return { error: 'Only vault operators can resolve claims' }
   }
 
+  // Fetch the claim AND the underlying transaction details for the
+  // conflict-of-interest check
   const { data: claim } = await supabase
     .from('claims')
-    .select('status')
+    .select(`
+      status,
+      transaction_id,
+      transactions (
+        renter_id,
+        listings (
+          items ( owner_id )
+        )
+      )
+    `)
     .eq('id', claimId)
     .single()
 
   if (!claim) return { error: 'Claim not found' }
   if (claim.status === 'RESOLVED') {
     return { error: 'Claim is already resolved' }
+  }
+
+  const txn = claim.transactions as any
+  const item = txn?.listings?.items
+
+  // Conflict of interest: operator cannot resolve a claim on their own rental
+  if (txn?.renter_id === user.id) {
+    return {
+      error:
+        'You cannot resolve a claim on a rental you made. Ask another operator to review.',
+    }
+  }
+
+  // Conflict of interest: operator cannot resolve a claim on an item they own
+  if (item?.owner_id && item.owner_id === user.id) {
+    return {
+      error:
+        'You cannot resolve a claim on an item you own. Ask another operator to review.',
+    }
   }
 
   const { error: updateError } = await supabase

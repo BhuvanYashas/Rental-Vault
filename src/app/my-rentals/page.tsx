@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ReturnButton from '@/components/ReturnButton'
 import DisputeClaimButton from '@/components/DisputeClaimButton'
+import EscalateClaimButton from '@/components/EscalateClaimButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +51,7 @@ export default async function MyRentalsPage() {
     ? await supabase
         .from('claims')
         .select(
-          'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at',
+          'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at, escalation_reason, escalated_at, platform_resolution, platform_notes, platform_resolved_at',
         )
         .in('transaction_id', txnIds)
     : { data: [] }
@@ -231,12 +232,19 @@ function ClaimBanner({ claim }: { claim: any }) {
     OPEN: 'bg-amber-50 border-amber-200',
     DISPUTED: 'bg-red-50 border-red-200',
     RESOLVED: 'bg-emerald-50 border-emerald-200',
+    ESCALATED: 'bg-amber-50 border-amber-300',
   }
   const labelByStatus: Record<string, string> = {
     OPEN: 'Damage claim filed',
     DISPUTED: 'Claim disputed — under review',
     RESOLVED: 'Claim resolved',
+    ESCALATED: 'Re-review requested — awaiting platform',
   }
+
+  const canEscalate =
+    claim.status === 'RESOLVED' &&
+    claim.resolution === 'VAULT_WINS' &&
+    !claim.platform_resolution
 
   return (
     <div className="mt-4 pt-4 border-t border-neutral-100">
@@ -253,9 +261,11 @@ function ClaimBanner({ claim }: { claim: any }) {
             ₹{claim.damage_amount}
           </p>
         </div>
+
         {claim.description && (
           <p className="text-sm text-neutral-700">{claim.description}</p>
         )}
+
         {claim.status === 'DISPUTED' && claim.dispute_reason && (
           <div className="mt-3 pt-3 border-t border-red-200">
             <p className="text-xs font-mono uppercase tracking-widest text-red-700 mb-1">
@@ -264,21 +274,54 @@ function ClaimBanner({ claim }: { claim: any }) {
             <p className="text-sm text-red-800">{claim.dispute_reason}</p>
           </div>
         )}
-        {claim.status === 'RESOLVED' && claim.resolution && (
-          <div className="mt-3 pt-3 border-t border-emerald-200">
-            <p className="text-xs font-mono uppercase tracking-widest text-emerald-700 mb-1">
-              Outcome
+
+        {claim.status === 'RESOLVED' &&
+          claim.resolution &&
+          !claim.platform_resolution && (
+            <div className="mt-3 pt-3 border-t border-emerald-200">
+              <p className="text-xs font-mono uppercase tracking-widest text-emerald-700 mb-1">
+                Outcome
+              </p>
+              <p className="text-sm text-emerald-900">
+                {claim.resolution === 'VAULT_WINS'
+                  ? `Charged ₹${claim.damage_amount} to your escrow`
+                  : 'No charge — resolved in your favor'}
+              </p>
+            </div>
+          )}
+
+        {claim.status === 'ESCALATED' && claim.escalation_reason && (
+          <div className="mt-3 pt-3 border-t border-amber-300">
+            <p className="text-xs font-mono uppercase tracking-widest text-amber-800 mb-1">
+              Your re-review request
             </p>
-            <p className="text-sm text-emerald-900">
-              {claim.resolution === 'VAULT_WINS'
-                ? `Charged ₹${claim.damage_amount} to your escrow`
-                : 'No charge — resolved in your favor'}
-            </p>
+            <p className="text-sm text-amber-900">{claim.escalation_reason}</p>
           </div>
         )}
+
+        {claim.platform_resolution && (
+          <div className="mt-3 pt-3 border-t border-indigo-300">
+            <p className="text-xs font-mono uppercase tracking-widest text-indigo-700 mb-1">
+              Final ruling · Platform
+            </p>
+            <p className="text-sm font-medium text-indigo-900">
+              {claim.platform_resolution === 'RENTER_WINS'
+                ? 'Reversed in your favor — no charge'
+                : 'Upheld — charge stands'}
+            </p>
+            {claim.platform_notes && (
+              <p className="text-sm text-indigo-800 mt-2">
+                {claim.platform_notes}
+              </p>
+            )}
+          </div>
+        )}
+
         {claim.status === 'OPEN' && (
           <DisputeClaimButton claimId={claim.id} />
         )}
+
+        {canEscalate && <EscalateClaimButton claimId={claim.id} />}
       </div>
     </div>
   )

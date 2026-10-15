@@ -39,16 +39,40 @@ export async function openClaim(
     return { error: 'At least one evidence photo is required' }
   }
 
-  // Ensure the transaction exists and is already returned
+  // Fetch the transaction with nested data for the conflict check
   const { data: txn, error: txnError } = await supabase
     .from('transactions')
-    .select('id, status')
+    .select(`
+      id,
+      status,
+      renter_id,
+      listings (
+        items ( owner_id )
+      )
+    `)
     .eq('id', transactionId)
     .single()
 
   if (txnError || !txn) return { error: 'Transaction not found' }
   if (txn.status !== 'RETURNED') {
     return { error: 'Claims can only be opened on returned rentals' }
+  }
+
+  const item = (txn.listings as any)?.items
+
+  // Conflict of interest: operator cannot file a claim on their own rental
+  if (txn.renter_id === user.id) {
+    return {
+      error:
+        'You cannot open a claim on your own rental. Ask another operator to review.',
+    }
+  }
+
+  if (item?.owner_id && item.owner_id === user.id) {
+    return {
+      error:
+        'You cannot open a claim on an item you own. Ask another operator to review.',
+    }
   }
 
   // Prevent duplicate open claims on the same transaction

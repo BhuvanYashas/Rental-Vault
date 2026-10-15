@@ -43,13 +43,22 @@ export default async function Header() {
                 My Rentals
               </Link>
               {role === 'operator' && (
-                <Link
-                  href="/operator"
-                  className="text-amber-600 hover:text-amber-800 font-medium"
-                >
-                  Dashboard
-                </Link>
-              )}
+  <Link
+    href="/operator"
+    className="text-amber-600 hover:text-amber-800 font-medium"
+  >
+    Dashboard
+  </Link>
+)}
+{role === 'platform' && (
+  <Link
+    href="/platform"
+    className="text-amber-600 hover:text-amber-800 font-medium"
+  >
+    Platform
+  </Link>
+)}
+              
               <SignOutButton />
             </>
           ) : (
