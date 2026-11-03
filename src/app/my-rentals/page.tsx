@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import ReturnButton from '@/components/ReturnButton'
+
 import DisputeClaimButton from '@/components/DisputeClaimButton'
 import EscalateClaimButton from '@/components/EscalateClaimButton'
 
@@ -88,7 +88,7 @@ export default async function MyRentalsPage() {
           </h2>
           <div className="space-y-3">
             {active.map((t) => (
-              <RentalRow key={t.id} transaction={t} showReturn />
+              <RentalRow key={t.id} transaction={t} />
             ))}
           </div>
         </section>
@@ -215,12 +215,11 @@ function RentalRow({
 
       {claim && <ClaimBanner claim={claim} />}
 
-      {showReturn && (
+               {showReturn && (
         <div className="mt-4 pt-4 border-t border-neutral-100">
-          <ReturnButton
-            listingId={transaction.listings.id}
-            itemId={item.id}
-          />
+          <p className="text-sm text-neutral-700 bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+            Please bring this item to the vault to return it. An operator will verify the condition and release your escrow.
+          </p>
         </div>
       )}
     </div>

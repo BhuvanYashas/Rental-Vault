@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ReturnedRentalRow from '@/components/ReturnedRentalRow'
+import ReturnButton from '@/components/ReturnButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,10 +57,10 @@ export default async function OperatorPage() {
 
   // Existing claims
   const { data: claims } = await supabase
-  .from('claims')
-  .select(
-    'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at',
-  )
+    .from('claims')
+    .select(
+      'id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at',
+    )
   
   const claimsByTxn = new Map(
     (claims ?? []).map((c) => [c.transaction_id, c]),
@@ -132,7 +133,7 @@ export default async function OperatorPage() {
               const listing = r.listings as any
               const item = listing?.items
               return (
-                <div key={r.id} className="p-5 flex items-center justify-between">
+                <div key={r.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <p className="font-semibold text-neutral-900">
                       {item?.name ?? '—'}
@@ -147,13 +148,18 @@ export default async function OperatorPage() {
                       </span>
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs font-mono text-neutral-500">
-                      {r.start_date} → {r.end_date}
-                    </p>
-                    <p className="text-sm font-semibold text-neutral-900 mt-1">
-                      Escrow ₹{r.escrow_amount}
-                    </p>
+                  <div className="flex flex-col items-end gap-3">
+                    <div className="text-right">
+                      <p className="text-xs font-mono text-neutral-500">
+                        {r.start_date} → {r.end_date}
+                      </p>
+                      <p className="text-sm font-semibold text-neutral-900 mt-1">
+                        Escrow ₹{r.escrow_amount}
+                      </p>
+                    </div>
+                    <div className="w-full md:w-64">
+                      <ReturnButton listingId={listing?.id} itemId={item?.id} />
+                    </div>
                   </div>
                 </div>
               )

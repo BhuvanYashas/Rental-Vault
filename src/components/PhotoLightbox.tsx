@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function PhotoLightbox({
   open,
@@ -15,17 +15,51 @@ export default function PhotoLightbox({
   itemName: string
   onClose: () => void
 }) {
+  // State to track if we are currently zooming into a specific image
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
+
+  // Close everything if the user presses Escape
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setZoomedImage(null) // reset zoom when closed
+      return
+    }
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        if (zoomedImage) {
+          setZoomedImage(null) // if zoomed, just un-zoom
+        } else {
+          onClose() // if not zoomed, close the whole lightbox
+        }
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [open, onClose])
+  }, [open, zoomedImage, onClose])
 
   if (!open) return null
 
+  // 1. If an image is selected for zooming, show the full-screen view
+  if (zoomedImage) {
+    return (
+      <div
+        onClick={() => setZoomedImage(null)}
+        className="fixed inset-0 bg-black z-[60] flex items-center justify-center p-4 cursor-zoom-out"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={zoomedImage}
+          alt="Zoomed evidence"
+          className="max-w-full max-h-[90vh] object-contain rounded"
+        />
+        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm font-mono bg-black/50 px-4 py-2 rounded-full">
+          Click anywhere or press Esc to close
+        </p>
+      </div>
+    )
+  }
+
+  // 2. Otherwise, show the side-by-side comparison view
   return (
     <div
       onClick={onClose}
@@ -58,7 +92,8 @@ export default function PhotoLightbox({
               <img
                 src={intakeUrl}
                 alt="Intake"
-                className="w-full rounded-lg border border-neutral-200"
+                onClick={() => setZoomedImage(intakeUrl)}
+                className="w-full rounded-lg border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
               />
             </div>
           )}
@@ -71,14 +106,17 @@ export default function PhotoLightbox({
               <img
                 src={returnUrl}
                 alt="Return"
-                className="w-full rounded-lg border border-neutral-200"
+                onClick={() => setZoomedImage(returnUrl)}
+                className="w-full rounded-lg border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
               />
             </div>
           )}
         </div>
 
-        <p className="text-xs text-neutral-500 text-center">
-          Press Esc or click outside to close
+        <p className="text-xs text-neutral-500 text-center flex items-center justify-center gap-2">
+          <span>🔍 Click any photo to zoom in</span>
+          <span>·</span>
+          <span>Press Esc to close</span>
         </p>
       </div>
     </div>
