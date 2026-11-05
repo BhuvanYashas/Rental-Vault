@@ -65,12 +65,7 @@ export default async function Header() {
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="text-white hover:text-[#D97706] transition"
-              >
-                Sign in
-              </Link>
+            
               <Link
                 href="/login?mode=signup"
                 className="bg-[#D97706] text-white px-4 py-2 rounded-lg hover:bg-[#B45309] transition shadow-sm"
