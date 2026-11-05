@@ -2,6 +2,9 @@ import Link from 'next/link'
 import type { Listing } from '@/lib/types'
 
 export function ListingCard({ listing }: { listing: Listing }) {
+  // 👇 This fixes the 3 TypeScript errors
+  if (!listing.items) return null 
+
   return (
     <Link
       href={`/listing/${listing.id}`}
@@ -13,7 +16,9 @@ export function ListingCard({ listing }: { listing: Listing }) {
             <h3 className="font-bold text-[#0F172A] text-lg group-hover:text-[#D97706] transition-colors">
               {listing.items.name}
             </h3>
-            <p className="text-xs text-[#1E293B] mt-1 font-medium">{listing.items.category}</p>
+            <p className="text-xs text-[#1E293B] mt-1 font-medium">
+              {listing.items.category}
+            </p>
           </div>
           <span className="text-xs font-mono font-bold px-2 py-1 rounded bg-[#E2E8F0] text-[#0F172A]">
             {listing.items.grade}
@@ -28,7 +33,9 @@ export function ListingCard({ listing }: { listing: Listing }) {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-medium text-[#1E293B]">Deposit ₹{listing.deposit}</p>
+            <p className="text-xs font-medium text-[#1E293B]">
+              Deposit ₹{listing.deposit}
+            </p>
           </div>
         </div>
       </div>
