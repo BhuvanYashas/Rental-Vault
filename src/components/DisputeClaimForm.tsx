@@ -42,7 +42,7 @@ export default function DisputeClaimForm({
       className="mt-3 p-4 bg-white border border-red-200 rounded-xl space-y-3"
     >
       <div>
-        <p className="text-xs font-mono uppercase tracking-widest text-red-700">
+        <p className="text-xs font-mono uppercase tracking-widest text-red-700 font-bold">
           Dispute this claim
         </p>
       </div>

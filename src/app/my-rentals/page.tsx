@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-
 import DisputeClaimButton from '@/components/DisputeClaimButton'
 import EscalateClaimButton from '@/components/EscalateClaimButton'
 
@@ -67,7 +66,7 @@ export default async function MyRentalsPage() {
     <main className="max-w-3xl mx-auto p-8">
       <Link
         href="/"
-        className="text-sm text-neutral-700 hover:text-neutral-900 mb-8 inline-block"
+        className="text-sm text-neutral-800 hover:text-neutral-900 mb-8 inline-block font-medium"
       >
         ← Back to listings
       </Link>
@@ -76,14 +75,14 @@ export default async function MyRentalsPage() {
         <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
           My Rentals
         </h1>
-        <p className="text-neutral-700 mt-2">
+        <p className="text-neutral-800 mt-2 font-medium">
           {active.length} active · {past.length} past
         </p>
       </header>
 
       {active.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-xs font-mono uppercase tracking-widest text-neutral-700 mb-4">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-neutral-800 mb-4 font-bold">
             Active
           </h2>
           <div className="space-y-3">
@@ -96,7 +95,7 @@ export default async function MyRentalsPage() {
 
       {past.length > 0 && (
         <section>
-          <h2 className="text-xs font-mono uppercase tracking-widest text-neutral-700 mb-4">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-neutral-800 mb-4 font-bold">
             Past
           </h2>
           <div className="space-y-3">
@@ -112,11 +111,17 @@ export default async function MyRentalsPage() {
       )}
 
       {active.length === 0 && past.length === 0 && (
-        <div className="text-center py-20 text-neutral-600">
-          <p>No rentals yet.</p>
-          <p className="text-sm mt-2">
-            Browse the vault and rent your first item.
+        <div className="text-center py-20 bg-white rounded-xl border border-neutral-200 shadow-sm">
+          <p className="text-lg font-semibold text-neutral-900">No rentals yet</p>
+          <p className="text-sm text-neutral-500 mt-1 mb-6">
+            Browse the vault to rent your first item.
           </p>
+          <Link
+            href="/"
+            className="inline-block bg-neutral-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-neutral-800 transition"
+          >
+            Browse items
+          </Link>
         </div>
       )}
     </main>
@@ -125,11 +130,9 @@ export default async function MyRentalsPage() {
 
 function RentalRow({
   transaction,
-  showReturn = false,
   claim = null,
 }: {
   transaction: any
-  showReturn?: boolean
   claim?: any
 }) {
   const item = transaction.listings?.items
@@ -153,7 +156,7 @@ function RentalRow({
   )?.photo_url
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-xl p-5">
+    <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
       <Link
         href={`/listing/${transaction.listings.id}`}
         className="block hover:opacity-80 transition"
@@ -164,7 +167,7 @@ function RentalRow({
             <p className="text-xs text-neutral-600 mt-0.5">{item.category}</p>
           </div>
           <span
-            className={`text-xs font-mono px-2.5 py-1 rounded ${
+            className={`text-xs font-mono px-2.5 py-1 rounded font-medium ${
               isActive
                 ? 'bg-amber-100 text-amber-800'
                 : 'bg-neutral-100 text-neutral-700'
@@ -178,7 +181,7 @@ function RentalRow({
           <span className="font-mono">
             {transaction.start_date} → {transaction.end_date}
           </span>
-          <span className="font-mono">Escrow ₹{transaction.escrow_amount}</span>
+          <span className="font-mono font-medium">Escrow ₹{transaction.escrow_amount}</span>
         </div>
       </Link>
 
@@ -186,7 +189,7 @@ function RentalRow({
         <div className="mt-4 pt-4 border-t border-neutral-100 grid grid-cols-2 gap-3">
           {latestIntakePhoto && (
             <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-neutral-700 mb-2">
+              <p className="text-xs font-mono uppercase tracking-widest text-neutral-700 mb-2 font-medium">
                 Intake
               </p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -199,7 +202,7 @@ function RentalRow({
           )}
           {latestReturnPhoto && (
             <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-neutral-700 mb-2">
+              <p className="text-xs font-mono uppercase tracking-widest text-neutral-700 mb-2 font-medium">
                 Return
               </p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -215,9 +218,9 @@ function RentalRow({
 
       {claim && <ClaimBanner claim={claim} />}
 
-               {showReturn && (
+      {isActive && (
         <div className="mt-4 pt-4 border-t border-neutral-100">
-          <p className="text-sm text-neutral-700 bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+          <p className="text-sm text-neutral-800 bg-neutral-50 rounded-lg p-4 border border-neutral-200 font-medium">
             Please bring this item to the vault to return it. An operator will verify the condition and release your escrow.
           </p>
         </div>
@@ -253,10 +256,10 @@ function ClaimBanner({ claim }: { claim: any }) {
         }`}
       >
         <div className="flex items-start justify-between gap-3 mb-2">
-          <p className="text-xs font-mono uppercase tracking-widest text-neutral-700">
+          <p className="text-xs font-mono uppercase tracking-widest text-neutral-800 font-bold">
             {labelByStatus[claim.status] ?? claim.status}
           </p>
-          <p className="font-semibold text-neutral-900">
+          <p className="font-bold text-neutral-900">
             ₹{claim.damage_amount}
           </p>
         </div>
@@ -267,7 +270,7 @@ function ClaimBanner({ claim }: { claim: any }) {
 
         {claim.status === 'DISPUTED' && claim.dispute_reason && (
           <div className="mt-3 pt-3 border-t border-red-200">
-            <p className="text-xs font-mono uppercase tracking-widest text-red-700 mb-1">
+            <p className="text-xs font-mono uppercase tracking-widest text-red-700 mb-1 font-bold">
               Your dispute
             </p>
             <p className="text-sm text-red-800">{claim.dispute_reason}</p>
@@ -278,10 +281,10 @@ function ClaimBanner({ claim }: { claim: any }) {
           claim.resolution &&
           !claim.platform_resolution && (
             <div className="mt-3 pt-3 border-t border-emerald-200">
-              <p className="text-xs font-mono uppercase tracking-widest text-emerald-700 mb-1">
+              <p className="text-xs font-mono uppercase tracking-widest text-emerald-700 mb-1 font-bold">
                 Outcome
               </p>
-              <p className="text-sm text-emerald-900">
+              <p className="text-sm text-emerald-900 font-medium">
                 {claim.resolution === 'VAULT_WINS'
                   ? `Charged ₹${claim.damage_amount} to your escrow`
                   : 'No charge — resolved in your favor'}
@@ -291,7 +294,7 @@ function ClaimBanner({ claim }: { claim: any }) {
 
         {claim.status === 'ESCALATED' && claim.escalation_reason && (
           <div className="mt-3 pt-3 border-t border-amber-300">
-            <p className="text-xs font-mono uppercase tracking-widest text-amber-800 mb-1">
+            <p className="text-xs font-mono uppercase tracking-widest text-amber-800 mb-1 font-bold">
               Your re-review request
             </p>
             <p className="text-sm text-amber-900">{claim.escalation_reason}</p>
@@ -300,10 +303,10 @@ function ClaimBanner({ claim }: { claim: any }) {
 
         {claim.platform_resolution && (
           <div className="mt-3 pt-3 border-t border-indigo-300">
-            <p className="text-xs font-mono uppercase tracking-widest text-indigo-700 mb-1">
+            <p className="text-xs font-mono uppercase tracking-widest text-indigo-700 mb-1 font-bold">
               Final ruling · Platform
             </p>
-            <p className="text-sm font-medium text-indigo-900">
+            <p className="text-sm font-bold text-indigo-900">
               {claim.platform_resolution === 'RENTER_WINS'
                 ? 'Reversed in your favor — no charge'
                 : 'Upheld — charge stands'}

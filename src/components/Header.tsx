@@ -20,17 +20,18 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-neutral-200 bg-white">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <header className="border-b border-[#0F172A] bg-[#0F172A] shadow-md">
+      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link
           href="/"
-          className="font-semibold tracking-tight text-neutral-900"
+          className="font-bold tracking-tight text-white text-lg"
         >
           Rental Vault
         </Link>
 
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/" className="text-neutral-600 hover:text-neutral-900">
+        <nav className="flex items-center gap-6 text-sm font-medium">
+          {/* Changed text to white, hover to amber */}
+          <Link href="/" className="text-white hover:text-[#D97706] transition">
             Browse
           </Link>
 
@@ -38,38 +39,44 @@ export default async function Header() {
             <>
               <Link
                 href="/my-rentals"
-                className="text-neutral-600 hover:text-neutral-900"
+                className="text-white hover:text-[#D97706] transition"
               >
                 My Rentals
               </Link>
               {role === 'operator' && (
-  <Link
-    href="/operator"
-    className="text-amber-600 hover:text-amber-800 font-medium"
-  >
-    Dashboard
-  </Link>
-)}
-{role === 'platform' && (
-  <Link
-    href="/platform"
-    className="text-amber-600 hover:text-amber-800 font-medium"
-  >
-    Platform
-  </Link>
-)}
-              
-              <SignOutButton />
+                <Link
+                  href="/operator"
+                  className="text-[#D97706] font-bold hover:text-[#B45309] transition"
+                >
+                  Dashboard
+                </Link>
+              )}
+              {role === 'platform' && (
+                <Link
+                  href="/platform"
+                  className="text-[#D97706] font-bold hover:text-[#B45309] transition"
+                >
+                  Platform
+                </Link>
+              )}
+              <div className="ml-2 border-l border-white/20 pl-4">
+                <SignOutButton />
+              </div>
             </>
           ) : (
             <>
               <Link
                 href="/login"
-                className="text-neutral-600 hover:text-neutral-900"
+                className="text-white hover:text-[#D97706] transition"
               >
                 Sign in
               </Link>
-              
+              <Link
+                href="/login?mode=signup"
+                className="bg-[#D97706] text-white px-4 py-2 rounded-lg hover:bg-[#B45309] transition shadow-sm"
+              >
+                Sign up
+              </Link>
             </>
           )}
         </nav>
