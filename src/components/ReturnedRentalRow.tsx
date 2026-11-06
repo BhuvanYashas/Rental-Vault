@@ -5,6 +5,7 @@ import OpenClaimForm from './OpenClaimForm'
 import ResolveClaimButton from './ResolveClaimButton'
 import PhotoLightbox from './PhotoLightbox'
 
+// === SECTION: TYPES ===
 type Claim = {
   id: string
   damage_amount: number
@@ -16,6 +17,7 @@ type Claim = {
   resolved_at: string | null
 } | null
 
+// === SECTION: MAIN COMPONENT ===
 export default function ReturnedRentalRow({
   transactionId,
   itemName,
@@ -51,64 +53,127 @@ export default function ReturnedRentalRow({
   }
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-xl p-5">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className="font-semibold text-neutral-900">{itemName}</p>
-          <p className="text-xs text-neutral-500 mt-0.5">{category}</p>
-          <p className="text-xs text-neutral-500 mt-1">
-            Renter: <span className="font-mono">{renterName}</span>
-          </p>
+    <div className="bg-white border border-[#5C7FA8]/30 rounded-3xl shadow-sm flex flex-col lg:flex-row overflow-hidden hover:shadow-md transition-shadow group">
+      
+      {/* --- COLUMN 1: EVIDENCE PHOTOS (Clickable) --- */}
+      <div className="lg:w-[30%] bg-[#F8FAFC] p-4 flex flex-col gap-2 border-b lg:border-b-0 lg:border-r border-[#E2E8F0]">
+        {intakePhoto && (
+          <div 
+            onClick={() => setLightboxOpen(true)}
+            className="relative rounded-xl overflow-hidden border border-[#E2E8F0] cursor-pointer group/img"
+          >
+            <span className="absolute top-2 left-2 z-10 bg-[#0F172A]/80 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Intake</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={intakePhoto} 
+              alt="Intake" 
+              className="w-full h-24 lg:h-28 object-cover group-hover/img:scale-105 transition-transform duration-300" 
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 flex items-center justify-center transition-colors">
+               <svg className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+            </div>
+          </div>
+        )}
+        {returnPhoto && (
+          <div 
+            onClick={() => setLightboxOpen(true)}
+            className="relative rounded-xl overflow-hidden border border-[#E2E8F0] cursor-pointer group/img"
+          >
+            <span className="absolute top-2 left-2 z-10 bg-[#D97706]/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Return</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={returnPhoto} 
+              alt="Return" 
+              className="w-full h-24 lg:h-28 object-cover group-hover/img:scale-105 transition-transform duration-300" 
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 flex items-center justify-center transition-colors">
+               <svg className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* --- COLUMN 2: ITEM DETAILS --- */}
+      <div className="lg:w-[35%] p-6 flex flex-col justify-center">
+        <div className="flex items-center gap-2 mb-2">
+           <h3 className="text-xl font-bold text-[#0F172A]">{itemName}</h3>
+           <span className="bg-[#F1F5F9] text-[#1E293B] text-[10px] font-bold px-2 py-0.5 rounded border border-[#E2E8F0] uppercase tracking-wider">{category}</span>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-mono text-neutral-500">
-            {startDate} → {endDate}
-          </p>
-          <p className="text-sm font-semibold text-neutral-900 mt-1">
-            Escrow ₹{escrowAmount}
-          </p>
+        <p className="text-sm text-[#1E293B] font-medium mb-4">
+          Renter: <span className="font-bold text-[#0F172A]">{renterName}</span>
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> RETURNED
+          </span>
+          <span className="text-xs font-mono text-[#5C7FA8] font-medium">{startDate} → {endDate}</span>
         </div>
       </div>
 
-      {(intakePhoto || returnPhoto) && (
-        <button
-          type="button"
-          onClick={() => setLightboxOpen(true)}
-          className="w-full text-left mb-4 group"
-        >
-          <div className="grid grid-cols-2 gap-3 group-hover:opacity-90 transition">
-            {intakePhoto && (
-              <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-1">
-                  Intake
+      {/* --- COLUMN 3: FINANCIALS & ACTION --- */}
+      <div className="lg:w-[35%] p-6 flex flex-col justify-center items-end bg-[#F8FAFC]/50 border-t lg:border-t-0 lg:border-l border-[#E2E8F0]">
+        
+        {!claim && !showForm && (
+          <>
+            <div className="text-right mb-4 w-full">
+              <p className="text-[10px] font-mono font-bold text-[#5C7FA8] uppercase tracking-widest mb-1">Escrow Held</p>
+              <p className="text-3xl font-black text-[#0F172A]">₹{escrowAmount}</p>
+            </div>
+            <button
+              onClick={() => setShowForm(true)}
+              className="w-full bg-[#D97706] text-white rounded-xl py-3 text-sm font-bold shadow-sm hover:bg-[#B45309] transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              Open Damage Claim
+            </button>
+          </>
+        )}
+
+        {showForm && (
+          <div className="w-full">
+             <OpenClaimForm
+              transactionId={transactionId}
+              itemName={itemName}
+              photos={photoOptions}
+              onCancel={() => setShowForm(false)}
+            />
+          </div>
+        )}
+
+        {claim && (
+          <div className="w-full space-y-3">
+            <div
+              className={`rounded-xl p-4 border ${
+                claim.status === 'RESOLVED'
+                  ? 'bg-emerald-50 border-emerald-200'
+                  : claim.status === 'DISPUTED'
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-amber-50 border-amber-200'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-[#0F172A] font-bold">
+                  Claim {claim.status}
                 </p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={intakePhoto}
-                  alt="Intake"
-                  className="w-full h-28 object-cover rounded-lg border border-neutral-200"
-                />
+                <p className="font-bold text-[#0F172A]">₹{claim.damage_amount}</p>
               </div>
-            )}
-            {returnPhoto && (
-              <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-1">
-                  Return
-                </p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={returnPhoto}
-                  alt="Return"
-                  className="w-full h-28 object-cover rounded-lg border border-neutral-200"
-                />
-              </div>
+              {claim.description && (
+                <p className="text-xs text-[#1E293B] font-medium leading-snug">{claim.description}</p>
+              )}
+              {claim.status === 'DISPUTED' && claim.dispute_reason && (
+                <div className="mt-2 pt-2 border-t border-red-200">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-red-700 mb-1 font-bold">Dispute</p>
+                  <p className="text-xs text-red-900 font-medium leading-snug">{claim.dispute_reason}</p>
+                </div>
+              )}
+            </div>
+            {claim.status !== 'RESOLVED' && (
+              <ResolveClaimButton claimId={claim.id} />
             )}
           </div>
-          <p className="text-xs font-mono uppercase tracking-widest text-amber-700 mt-2">
-            Click to view full size
-          </p>
-        </button>
-      )}
+        )}
+
+      </div>
 
       <PhotoLightbox
         open={lightboxOpen}
@@ -117,73 +182,6 @@ export default function ReturnedRentalRow({
         itemName={itemName}
         onClose={() => setLightboxOpen(false)}
       />
-
-      {claim ? (
-        <div className="space-y-3">
-          <div
-            className={`rounded-lg p-4 border ${
-              claim.status === 'RESOLVED'
-                ? 'bg-emerald-50 border-emerald-200'
-                : claim.status === 'DISPUTED'
-                  ? 'bg-red-50 border-red-200'
-                  : 'bg-amber-50 border-amber-200'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-mono uppercase tracking-widest text-neutral-700">
-                Claim · {claim.status}
-              </p>
-              <p className="font-semibold text-neutral-900">
-                ₹{claim.damage_amount}
-              </p>
-            </div>
-            {claim.description && (
-              <p className="text-sm text-neutral-700">{claim.description}</p>
-            )}
-            {claim.status === 'DISPUTED' && claim.dispute_reason && (
-              <div className="mt-3 pt-3 border-t border-red-200">
-                <p className="text-xs font-mono uppercase tracking-widest text-red-700 mb-1">
-                  Renter dispute
-                </p>
-                <p className="text-sm text-red-800">{claim.dispute_reason}</p>
-              </div>
-            )}
-            {claim.status === 'RESOLVED' && claim.resolution && (
-              <div className="mt-3 pt-3 border-t border-emerald-200">
-                <p className="text-xs font-mono uppercase tracking-widest text-emerald-700 mb-1">
-                  Outcome
-                </p>
-                <p className="text-sm text-emerald-900">
-                  {claim.resolution === 'VAULT_WINS'
-                    ? `Ruled for vault — renter charged ₹${claim.damage_amount}`
-                    : 'Ruled for renter — no charge'}
-                </p>
-              </div>
-            )}
-          </div>
-          {claim.status !== 'RESOLVED' && (
-            <ResolveClaimButton claimId={claim.id} />
-          )}
-        </div>
-      ) : (
-        <>
-          {!showForm ? (
-            <button
-              onClick={() => setShowForm(true)}
-              className="w-full bg-neutral-900 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-neutral-800"
-            >
-              Open damage claim
-            </button>
-          ) : (
-            <OpenClaimForm
-              transactionId={transactionId}
-              itemName={itemName}
-              photos={photoOptions}
-              onCancel={() => setShowForm(false)}
-            />
-          )}
-        </>
-      )}
     </div>
   )
 }

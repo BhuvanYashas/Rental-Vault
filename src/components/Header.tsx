@@ -20,17 +20,20 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-[#0F172A] bg-[#0F172A] shadow-md">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+    <header className="border-b border-[#0F172A] bg-[#0F172A] shadow-lg sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-4">
+        
+        {/* Logo - prevents wrapping */}
         <Link
           href="/"
-          className="font-bold tracking-tight text-white text-lg"
+          className="font-extrabold tracking-tight text-white text-lg md:text-xl hover:text-[#D97706] transition-colors whitespace-nowrap"
         >
           Rental Vault
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <Link href="/" className="text-white hover:text-[#D97706] transition">
+        {/* Nav Links - smaller text and gaps on mobile */}
+        <nav className="flex items-center gap-3 md:gap-5 text-xs md:text-sm font-medium overflow-x-auto">
+          <Link href="/" className="px-2 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors whitespace-nowrap">
             Browse
           </Link>
 
@@ -38,33 +41,35 @@ export default async function Header() {
             <>
               <Link
                 href="/my-rentals"
-                className="text-white hover:text-[#D97706] transition"
+                className="px-2 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors whitespace-nowrap hidden sm:block"
               >
-                My Rentals
+                Rentals
               </Link>
+              
               <Link
-                href="/profile"
-                className="text-white hover:text-[#D97706] transition"
+                href="/owner/dashboard"
+                className="px-2 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors whitespace-nowrap hidden sm:block"
               >
-                Profile
+                Items
               </Link>
+
+              <Link
+                href="/owner/new-item"
+                className="px-2 py-1.5 text-[#D97706] font-bold hover:bg-[#D97706]/10 rounded-lg transition-colors whitespace-nowrap"
+              >
+                + List
+              </Link>
+
               {role === 'operator' && (
                 <Link
                   href="/operator"
-                  className="text-[#D97706] font-bold hover:text-[#B45309] transition"
+                  className="px-2 py-1.5 text-[#D97706] font-bold hover:bg-[#D97706]/10 rounded-lg transition-colors whitespace-nowrap ml-1"
                 >
-                  Dashboard
+                  Operator
                 </Link>
               )}
-              {role === 'platform' && (
-                <Link
-                  href="/platform"
-                  className="text-[#D97706] font-bold hover:text-[#B45309] transition"
-                >
-                  Platform
-                </Link>
-              )}
-              <div className="ml-2 border-l border-white/20 pl-4">
+              
+              <div className="ml-1 pl-3 border-l border-white/20 whitespace-nowrap">
                 <SignOutButton />
               </div>
             </>
@@ -72,13 +77,13 @@ export default async function Header() {
             <>
               <Link
                 href="/login"
-                className="text-white hover:text-[#D97706] transition"
+                className="px-2 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors whitespace-nowrap"
               >
                 Sign in
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="bg-[#D97706] text-white px-4 py-2 rounded-lg hover:bg-[#B45309] transition shadow-sm"
+                className="bg-[#D97706] text-white px-3 py-1.5 md:px-5 md:py-2.5 rounded-lg hover:bg-[#B45309] transition shadow-sm font-bold whitespace-nowrap ml-1"
               >
                 Sign up
               </Link>
