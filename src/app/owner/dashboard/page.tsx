@@ -173,4 +173,4 @@ function StatCard({ label, value, icon }: { label: string, value: number, icon: 
       <p className="relative z-10 text-4xl font-extrabold tracking-tight text-[#0F172A]">{value}</p>
     </div>
   )
-}
+} 

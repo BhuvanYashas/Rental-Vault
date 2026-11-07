@@ -64,20 +64,12 @@ export default async function Header() {
               <UserNav email={user.email!} username={username} role={role} />
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              <Link 
-                href="/login" 
-                className="text-sm font-medium text-white hover:text-[#D97706] transition-colors focus:outline-none"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/login?mode=signup"
-                className="bg-[#D97706] text-white px-5 py-2 rounded-lg hover:bg-[#B45309] transition shadow-sm text-sm font-bold focus:outline-none"
-              >
-                Sign up
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              className="bg-[#D97706] text-white px-6 py-2 rounded-lg hover:bg-[#B45309] transition shadow-sm text-sm font-bold focus:outline-none whitespace-nowrap"
+            >
+              Sign in / Join
+            </Link>
           )}
 
         </div>

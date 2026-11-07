@@ -2,9 +2,58 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import RentButton from '@/components/RentButton'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
+// === SECTION: SEO & OPENGRAPH METADATA ===
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('listings')
+    .select(`
+      rate_per_day,
+      items ( name, category, photos )
+    `)
+    .eq('id', id)
+    .single()
+
+  if (!data || !data.items) {
+    return { title: 'Item Not Found | Rental Vault' }
+  }
+
+  const item = data.items as any
+  const title = `${item.name} — ₹${data.rate_per_day}/day | Rental Vault`
+  const description = `Rent a ${item.name} (${item.category}) on Rental Vault. Verified, insured, and escrowed.`
+  
+  // Use the first photo from the item, or a generic fallback image
+  const imageUrl = item.photos?.[0] || 'https://your-project.supabase.co/storage/v1/object/public/item-photos/default-og.jpg'
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
+  }
+}
+
+// === SECTION: MAIN PAGE COMPONENT ===
 export default async function ListingDetailPage({
   params,
 }: {
@@ -75,8 +124,7 @@ export default async function ListingDetailPage({
               </div>
             </div>
 
-            {/* Trust Layer Card - mt-auto removed */}
-            <div className="bg-[#0F172A] rounded-2xl p-6 text-white relative overflow-hidden shadow-inner">
+            <div className="bg-[#0F172A] rounded-2xl p-6 text-white relative overflow-hidden shadow-inner mt-auto">
               <div className="absolute -right-4 -top-4 opacity-10">
                 <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
               </div>
