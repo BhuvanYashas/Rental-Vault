@@ -18,16 +18,23 @@ export async function rentItem(
 
   if (!user) return { error: 'You must be signed in to rent' }
 
-  const { data: item, error: fetchError } = await supabase
+  // 👇 THE RACE CONDITION FIX 👇
+  // Instead of reading the state first and then updating, we do an atomic
+  // conditional update. This will ONLY succeed if the state is still IN_VAULT.
+  const { data: updatedItem, error: updateError } = await supabase
     .from('items')
-    .select('state')
+    .update({ state: 'RENTED' })
     .eq('id', itemId)
+    .eq('state', 'IN_VAULT') // <-- The magic line
+    .select()
     .single()
 
-  if (fetchError || !item) return { error: 'Item not found' }
-  if (item.state !== 'IN_VAULT')
-    return { error: `Item is currently ${item.state}, not available for rent` }
+  // If no row was updated (updatedItem is null), it means someone else rented it first.
+  if (updateError || !updatedItem) {
+    return { error: 'This item was just rented by someone else. Please try another item.' }
+  }
 
+  // Now that we successfully locked the item, we create the transaction
   const start = new Date()
   const end = new Date()
   end.setDate(end.getDate() + 7)
@@ -41,14 +48,13 @@ export async function rentItem(
     status: 'ACTIVE',
   })
 
-  if (txnError) return { error: txnError.message }
-
-  const { error: updateError } = await supabase
-    .from('items')
-    .update({ state: 'RENTED' })
-    .eq('id', itemId)
-
-  if (updateError) return { error: updateError.message }
+  if (txnError) {
+    // If the transaction fails, we should ideally rollback the item state.
+    // Since Supabase doesn't support multi-statement transactions via the JS client,
+    // we do a manual rollback here.
+    await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId)
+    return { error: txnError.message }
+  }
 
   const trimmed = note?.trim()
   await supabase.from('custody_events').insert({

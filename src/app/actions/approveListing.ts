@@ -2,14 +2,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendNotification } from './notifications'
 
 export async function approveListing(listingId: string, itemId: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'You must be signed in' }
 
   const { data: profile } = await supabase
@@ -37,6 +35,17 @@ export async function approveListing(listingId: string, itemId: string) {
     actor_id: user.id,
     notes: 'Item inspected and approved by operator',
   })
+
+  // 3. Send notification to the OWNER
+  const { data: itemData } = await supabase.from('items').select('owner_id, name').eq('id', itemId).single()
+  if (itemData?.owner_id) {
+    await sendNotification(
+      itemData.owner_id,
+      'Listing Approved',
+      `Your item "${itemData.name}" has been inspected and is now live in the vault!`,
+      '/owner/dashboard'
+    )
+  }
 
   revalidatePath('/')
   revalidatePath('/operator')

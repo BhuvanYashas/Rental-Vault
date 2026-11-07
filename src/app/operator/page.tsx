@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import ReturnedRentalRow from '@/components/ReturnedRentalRow'
 import ReturnButton from '@/components/ReturnButton'
 import ApproveListingButton from '@/components/ApproveListingButton'
+import ChatButton from '@/components/ChatButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,6 +106,7 @@ export default async function OperatorPage() {
             {pendingListings.map((listing: any) => {
               const item = listing.items
               const owner = item?.owner_id ? profileMap.get(item.owner_id) : null
+              
               return (
                 <div key={listing.id} className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex justify-between items-center gap-4">
                   <div className="flex items-center gap-4">
@@ -165,7 +167,10 @@ export default async function OperatorPage() {
                       <p className="text-sm font-bold text-[#0F172A]">Escrow ₹{r.escrow_amount}</p>
                       <p className="text-xs text-[#1E293B] font-medium mt-1">{r.start_date} → {r.end_date}</p>
                     </div>
-                    <div className="w-full md:w-64">
+                    
+                    {/* CHAT BUTTON IS HERE IN ACTIVE RENTALS */}
+                    <div className="flex flex-col gap-2 w-full md:w-64">
+                      <ChatButton transactionId={r.id} itemName={item?.name || 'Item'} />
                       <ReturnButton listingId={listing?.id} itemId={item?.id} />
                     </div>
                   </div>
@@ -216,33 +221,33 @@ export default async function OperatorPage() {
       {/* === SECTION: VAULT INVENTORY TABLE === */}
       <section>
         <h2 className="text-lg font-bold text-[#0F172A] mb-4">Vault Inventory</h2>
-         <div className="overflow-x-auto">
         <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl overflow-hidden shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-[#F8FAFC] text-left border-b border-[#E2E8F0]">
-              <tr>
-                <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Item</th>
-                <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Category</th>
-                <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Grade</th>
-                <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Serial</th>
-                <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold text-right">State</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E8F0]">
-              {items?.map((it) => (
-                <tr key={it.id} className="hover:bg-[#F8FAFC]/50 transition-colors group">
-                  <td className="px-6 py-4 font-bold text-[#0F172A] group-hover:text-[#D97706] transition-colors">{it.name}</td>
-                  <td className="px-6 py-4 text-[#1E293B] font-medium">
-                    <span className="bg-[#F1F5F9] px-2.5 py-1 rounded-md text-xs font-bold text-[#0F172A]">{it.category}</span>
-                  </td>
-                  <td className="px-6 py-4 font-mono font-bold text-[#0F172A]">{it.grade ?? '—'}</td>
-                  <td className="px-6 py-4 font-mono text-[#1E293B] text-xs">{it.serial_number ?? '—'}</td>
-                  <td className="px-6 py-4 text-right"><StateBadge state={it.state} /></td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
+              <thead className="bg-[#F8FAFC] text-left border-b border-[#E2E8F0]">
+                <tr>
+                  <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Item</th>
+                  <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Category</th>
+                  <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Grade</th>
+                  <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Serial</th>
+                  <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold text-right">State</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-           </div>
+              </thead>
+              <tbody className="divide-y divide-[#E2E8F0]">
+                {items?.map((it) => (
+                  <tr key={it.id} className="hover:bg-[#F8FAFC]/50 transition-colors group">
+                    <td className="px-6 py-4 font-bold text-[#0F172A] group-hover:text-[#D97706] transition-colors">{it.name}</td>
+                    <td className="px-6 py-4 text-[#1E293B] font-medium">
+                      <span className="bg-[#F1F5F9] px-2.5 py-1 rounded-md text-xs font-bold text-[#0F172A]">{it.category}</span>
+                    </td>
+                    <td className="px-6 py-4 font-mono font-bold text-[#0F172A]">{it.grade ?? '—'}</td>
+                    <td className="px-6 py-4 font-mono text-[#1E293B] text-xs">{it.serial_number ?? '—'}</td>
+                    <td className="px-6 py-4 text-right"><StateBadge state={it.state} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 

@@ -32,11 +32,11 @@ export default function ApproveListingButton({
       <button
         onClick={handleApprove}
         disabled={isPending}
-        className="bg-[#D97706] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#B45309] transition shadow-sm disabled:opacity-50"
+        className="bg-[#D97706] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#B45309] transition shadow-sm disabled:opacity-50 whitespace-nowrap"
       >
         {isPending ? 'Approving…' : 'Approve & List'}
       </button>
-      {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
+      {error && <p className="text-red-600 text-xs mt-1 font-medium">{error}</p>}
     </div>
   )
 }

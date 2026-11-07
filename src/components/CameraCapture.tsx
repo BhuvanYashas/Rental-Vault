@@ -189,7 +189,7 @@ export default function CameraCapture({
           type="button"
           onClick={openCamera}
           disabled={isUploading}
-          className="w-full bg-neutral-900 text-white rounded-xl py-3 font-medium hover:bg-neutral-800 disabled:opacity-50"
+          className="w-full bg-[#D97706] text-white rounded-xl py-3 font-medium hover:bg-neutral-800 disabled:opacity-50"
         >
           {isUploading ? 'Uploading…' : '📷 Open Camera'}
         </button>

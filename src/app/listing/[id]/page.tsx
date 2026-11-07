@@ -38,11 +38,11 @@ export default async function ListingDetailPage({
         Back to listings
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
         {/* Left Column: Item Details */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl p-8 shadow-sm relative overflow-hidden">
+        <div className="lg:col-span-2 flex flex-col">
+          <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl p-8 shadow-sm relative overflow-hidden flex flex-col h-full">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#F8FAFC] rounded-bl-full -z-10 opacity-50"></div>
             
             <div className="flex items-start justify-between mb-6">
@@ -75,7 +75,7 @@ export default async function ListingDetailPage({
               </div>
             </div>
 
-            {/* Premium Trust Layer Card */}
+            {/* Trust Layer Card - mt-auto removed */}
             <div className="bg-[#0F172A] rounded-2xl p-6 text-white relative overflow-hidden shadow-inner">
               <div className="absolute -right-4 -top-4 opacity-10">
                 <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
@@ -92,8 +92,8 @@ export default async function ListingDetailPage({
         </div>
 
         {/* Right Column: Pricing & Action */}
-        <div className="lg:col-span-1">
-          <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl p-8 shadow-lg sticky top-24">
+        <div className="lg:col-span-1 flex flex-col">
+          <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl p-8 shadow-lg sticky top-24 flex-1">
             <div className="mb-6">
               <p className="text-sm font-bold text-[#1E293B] mb-1">Rental Rate</p>
               <div className="flex items-baseline gap-1">
