@@ -29,13 +29,20 @@ export async function rentItem(
   const itemName = (listing.items as any)?.name || 'Item'
   const ratePerDay = listing.rate_per_day
   
-  // 2. Calculate cost on server
+  // 2. Calculate cost on server & validate dates
   const start = new Date(startDate)
   const end = new Date(endDate)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // Reset time to midnight for accurate comparison
+
+  if (start < today) {
+    return { error: 'Start date cannot be in the past.' }
+  }
+
   const diffTime = end.getTime() - start.getTime()
   const rentalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-  if (rentalDays <= 0) return { error: 'Invalid rental dates.' }
+  if (rentalDays <= 0) return { error: 'End date must be after the start date.' }
 
   const rentalFee = ratePerDay * rentalDays
   const totalUpfrontCost = deposit + rentalFee
@@ -54,7 +61,7 @@ export async function rentItem(
     return { error: `Insufficient funds. You need ₹${totalUpfrontCost}, but your wallet only has ₹${currentBalance}.` }
   }
 
-  // 4. ATOMIC LOCK
+  // 4. ATOMIC LOCK: Lock the item
   const { data: updatedItem, error: updateError } = await supabase
     .from('items')
     .update({ state: 'RENTED' })
@@ -67,31 +74,36 @@ export async function rentItem(
     return { error: 'This item was just rented by someone else.' }
   }
 
-  // 5. Deduct from wallet
+  // 5. ATOMIC WALLET DEDUCTION: Only update if balance hasn't changed
   const newBalance = currentBalance - totalUpfrontCost
-  const { error: walletError } = await supabase
+  const { data: updatedWallet, error: walletError } = await supabase
     .from('profiles')
     .update({ wallet_balance: newBalance })
     .eq('id', user.id)
+    .eq('wallet_balance', currentBalance) // 👈 THE FIX: Ensures no double-spending
+    .select()
+    .single()
 
-  if (walletError) {
+  if (walletError || !updatedWallet) {
+    // Rollback item state if wallet failed
     await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId)
-    return { error: 'Failed to deduct funds from wallet.' }
+    return { error: 'Wallet balance changed during transaction. Please try again.' }
   }
 
-  // 6. Create transaction with USER SELECTED DATES
+  // 6. Create transaction
   const { error: txnError } = await supabase.from('transactions').insert({
     listing_id: listingId,
     renter_id: user.id,
-    start_date: startDate, // Using the exact dates the user selected
+    start_date: startDate,
     end_date: endDate,
     escrow_amount: totalUpfrontCost,
     status: 'ACTIVE',
   })
 
   if (txnError) {
+    // Rollback everything
     await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId)
-    await supabase.from('profiles').update({ wallet_balance: currentBalance }).eq('id', user.id)
+    await supabase.from('profiles').update({ wallet_balance: currentBalance }).eq('id', user.id).eq('wallet_balance', newBalance)
     return { error: txnError.message }
   }
 

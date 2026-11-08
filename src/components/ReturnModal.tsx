@@ -9,6 +9,7 @@ export default function ReturnModal({
   listingId,
   itemId,
   endDate,
+  ratePerDay, // 👈 NEW PROP
   itemName,
   renterName,
   onClose,
@@ -16,6 +17,7 @@ export default function ReturnModal({
   listingId: string
   itemId: string
   endDate: string
+  ratePerDay: number // 👈 NEW PROP
   itemName: string
   renterName: string
   onClose: () => void
@@ -26,18 +28,22 @@ export default function ReturnModal({
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [note, setNote] = useState('')
 
-  // Calculate potential late fee
+  // === FIXED DATE & FEE CALCULATION ===
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const dueDate = new Date(endDate)
+  // Force dueDate to local time midnight to match today
+  dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset()) 
   dueDate.setHours(0, 0, 0, 0)
-  
+
   let lateDays = 0
   let lateFee = 0
+  
   if (today > dueDate) {
     const diffTime = Math.abs(today.getTime() - dueDate.getTime())
     lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    lateFee = lateDays * 100
+    // 👈 MATCHES THE BACKEND LOGIC: 1.5x daily rate
+    lateFee = Math.round(lateDays * (ratePerDay * 1.5)) 
   }
 
   function handleSubmit() {
@@ -68,7 +74,7 @@ export default function ReturnModal({
             <h2 className="text-xl font-bold text-white leading-tight">{itemName}</h2>
             <p className="text-sm text-slate-400 mt-1">Renter: {renterName}</p>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white bg-white/10 p-2 rounded-full transition-colors">
+          <button type="button" onClick={onClose} className="text-white/70 hover:text-white bg-white/10 p-2 rounded-full transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -114,6 +120,7 @@ export default function ReturnModal({
         {/* Footer */}
         <div className="p-4 border-t border-[#E2E8F0] bg-white shrink-0 flex gap-2">
           <button
+            type="button"
             onClick={onClose}
             disabled={isPending}
             className="px-5 bg-neutral-100 text-neutral-700 rounded-xl py-3 font-bold hover:bg-neutral-200 transition disabled:opacity-50"
@@ -121,6 +128,7 @@ export default function ReturnModal({
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={isPending || !photoUrl}
             className="flex-1 bg-[#D97706] text-white rounded-xl py-3 font-bold hover:bg-[#B45309] transition disabled:opacity-50 shadow-sm"

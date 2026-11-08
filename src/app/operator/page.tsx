@@ -34,11 +34,15 @@ export default async function OperatorPage() {
     .eq('active', false)
     .order('created_at', { ascending: false })
 
-  const { data: rentals } = await supabase.from('transactions').select(`id, start_date, end_date, escrow_amount, renter_id, created_at, listings ( id, items ( id, name, category, grade ) )`).eq('status', 'ACTIVE').order('created_at', { ascending: false })
+  const { data: rentals } = await supabase.from('transactions').select(`id, start_date, end_date, escrow_amount, renter_id, created_at, listings ( id, rate_per_day, items ( id, name, category, grade ) )`).eq('status', 'ACTIVE').order('created_at', { ascending: false })
   
   const { data: returned } = await supabase.from('transactions').select(`id, start_date, end_date, escrow_amount, renter_id, created_at, listings ( id, items ( id, name, category, custody_events ( id, state, photo_url, created_at ) ) )`).eq('status', 'RETURNED').order('created_at', { ascending: false }).limit(20)
   
-  const { data: claims } = await supabase.from('claims').select('id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at')
+  // 👇 1. FIXED CLAIMS QUERY: Added escalation and platform columns
+  const { data: claims } = await supabase
+    .from('claims')
+    .select('id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at, escalation_reason, escalated_at, platform_resolution, platform_notes, platform_resolved_at')
+  
   const claimsByTxn = new Map((claims ?? []).map((c) => [c.transaction_id, c]))
 
   const { data: events } = await supabase.from('custody_events').select(`id, state, notes, created_at, actor_id, items ( id, name )`).order('created_at', { ascending: false }).limit(20)
@@ -55,7 +59,8 @@ export default async function OperatorPage() {
   const totalItems = items?.length ?? 0
   const inVault = items?.filter((i) => i.state === 'IN_VAULT').length ?? 0
   const rented = items?.filter((i) => i.state === 'RENTED').length ?? 0
-  const openClaims = claims?.filter((c) => c.status === 'OPEN' || c.status === 'DISPUTED').length ?? 0
+  // 👇 2. Added ESCALATED to the open claims count
+  const openClaims = claims?.filter((c) => c.status === 'OPEN' || c.status === 'DISPUTED' || c.status === 'ESCALATED').length ?? 0
 
   return (
     <main className="max-w-6xl mx-auto p-8 space-y-12">
@@ -178,10 +183,12 @@ export default async function OperatorPage() {
                     </div>
                     <div className="flex flex-col gap-2 w-full md:w-64">
                       <ChatButton transactionId={r.id} itemName={item?.name || 'Item'} />
+                      {/* 👇 3. FIXED: Added ratePerDay prop */}
                       <ReturnButton 
                         listingId={listing?.id} 
                         itemId={item?.id} 
                         endDate={r.end_date}
+                        ratePerDay={listing?.rate_per_day || 0}
                         itemName={item?.name || 'Item'}
                         renterName={renter?.full_name || 'Renter'}
                       />

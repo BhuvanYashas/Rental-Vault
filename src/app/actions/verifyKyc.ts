@@ -13,11 +13,21 @@ export async function verifyKyc(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Ensure the person clicking the button is an operator
+  // 1. Prevent Self-Verification (Operators cannot verify themselves)
+  if (targetUserId === user.id) {
+    return { error: 'You cannot verify your own identity.' }
+  }
+
+  // 2. Runtime validation of status
+  if (status !== 'verified' && status !== 'rejected') {
+    return { error: 'Invalid KYC status requested.' }
+  }
+
+  // 3. Ensure the person clicking the button is an operator
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'operator') return { error: 'Unauthorized' }
 
-  // 1. Update the KYC status in the database
+  // 4. Update the KYC status in the database
   const { error } = await supabase
     .from('profiles')
     .update({ kyc_status: status })
@@ -25,7 +35,7 @@ export async function verifyKyc(
 
   if (error) return { error: error.message }
 
-  // 2. Send a notification/email to the user
+  // 5. Send a notification/email to the user
   const title = status === 'verified' ? 'Identity Verified' : 'KYC Verification Failed'
   const message = status === 'verified' 
     ? 'Your ID has been approved. You now have full access to the vault.' 

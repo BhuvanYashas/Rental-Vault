@@ -5,74 +5,77 @@ import { useRouter } from 'next/navigation'
 import { escalateClaim } from '@/app/actions/escalateClaim'
 
 export default function EscalateClaimButton({ claimId }: { claimId: string }) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-  const [open, setOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const [reason, setReason] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    
     if (!reason.trim()) {
-      setError('Please explain why you are requesting a re-review')
-      return
+      return setError('Please explain why you are requesting a re-review')
     }
+
     startTransition(async () => {
       const result = await escalateClaim(claimId, reason)
       if (result.error) {
         setError(result.error)
-        return
+      } else {
+        setIsOpen(false)
+        router.refresh()
       }
-      router.refresh()
-      setOpen(false)
     })
   }
 
-  if (!open) {
+  if (!isOpen) {
     return (
       <button
-        onClick={() => setOpen(true)}
-        className="mt-3 text-sm font-medium text-red-700 hover:text-red-900 underline"
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="mt-3 text-sm font-bold text-[#D97706] hover:text-[#B45309] underline transition-colors"
       >
-        Request re-review
+        Request Platform Re-review
       </button>
     )
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mt-3 p-4 bg-white border border-red-300 rounded-xl space-y-3"
-    >
-      <p className="text-xs font-mono uppercase tracking-widest text-red-700">
-        Request platform re-review
+    <form onSubmit={handleSubmit} className="mt-3 p-4 bg-white border border-[#E2E8F0] rounded-xl space-y-3">
+      <p className="text-xs font-mono uppercase tracking-widest text-[#0F172A] font-bold">
+        Escalate to Platform
       </p>
+      
       <textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Explain why you disagree with the operator's ruling"
+        placeholder="Explain why you disagree with the operator's ruling. The platform reviewer will see this."
         rows={3}
-        className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-500"
+        disabled={isPending}
+        className="w-full border border-[#5C7FA8]/40 rounded-lg px-3 py-2 text-sm text-[#0F172A] placeholder:text-[#5C7FA8]/60 focus:outline-none focus:border-[#0F172A] disabled:opacity-50"
       />
+
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 font-medium">
           {error}
         </p>
       )}
+
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 bg-red-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+          className="flex-1 bg-[#D97706] text-white rounded-lg py-2 text-sm font-bold hover:bg-[#B45309] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Submitting…' : 'Submit'}
+          {isPending ? 'Submitting...' : 'Submit to Platform'}
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => setIsOpen(false)}
           disabled={isPending}
-          className="px-4 bg-neutral-200 text-neutral-900 rounded-lg py-2 text-sm font-medium hover:bg-neutral-300 disabled:opacity-50"
+          className="px-4 bg-neutral-100 text-neutral-700 rounded-lg py-2 text-sm font-bold hover:bg-neutral-200 transition-colors disabled:opacity-50"
         >
           Cancel
         </button>

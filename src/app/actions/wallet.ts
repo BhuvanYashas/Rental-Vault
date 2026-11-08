@@ -9,7 +9,8 @@ export async function addFundsToWallet(amount: number): Promise<{ error?: string
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  if (amount <= 0) return { error: 'Amount must be greater than 0' }
+  if (isNaN(amount) || amount <= 0) return { error: 'Amount must be greater than 0' }
+  if (amount > 100000) return { error: 'Maximum deposit is ₹1,00,000 per transaction' }
 
   // 1. Fetch current balance
   const { data: profile, error: fetchError } = await supabase
@@ -18,18 +19,25 @@ export async function addFundsToWallet(amount: number): Promise<{ error?: string
     .eq('id', user.id)
     .single()
 
-  if (fetchError) return { error: 'Could not fetch wallet' }
+  if (fetchError || !profile) return { error: 'Could not fetch wallet' }
+
+  const currentBalance = profile.wallet_balance || 0
 
   // 2. Calculate new balance
-  const newBalance = (profile.wallet_balance || 0) + amount
+  const newBalance = currentBalance + amount
 
-  // 3. Update profile
-  const { error: updateError } = await supabase
+  // 3. ATOMIC UPDATE: Only update if the balance hasn't changed since we read it
+  const { data: updatedWallet, error: updateError } = await supabase
     .from('profiles')
     .update({ wallet_balance: newBalance })
     .eq('id', user.id)
+    .eq('wallet_balance', currentBalance) // 👈 Prevents double-clicking
+    .select()
+    .single()
 
-  if (updateError) return { error: updateError.message }
+  if (updateError || !updatedWallet) {
+    return { error: 'Transaction collision detected. Please try again.' }
+  }
 
   // 4. Log the transaction
   await supabase.from('wallet_transactions').insert({

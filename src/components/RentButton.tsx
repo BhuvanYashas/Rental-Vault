@@ -24,11 +24,18 @@ export default function RentButton({
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [note, setNote] = useState('')
 
-  // Default dates: Today and 7 days from now
-  const todayStr = new Date().toISOString().split('T')[0]
+  // === FIX: Get local date string (YYYY-MM-DD) instead of UTC ===
+  const getLocalDateString = (date: Date) => {
+    const offset = date.getTimezoneOffset()
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000))
+    return localDate.toISOString().split('T')[0]
+  }
+
+  const todayStr = getLocalDateString(new Date())
+  
   const nextWeek = new Date()
   nextWeek.setDate(nextWeek.getDate() + 7)
-  const nextWeekStr = nextWeek.toISOString().split('T')[0]
+  const nextWeekStr = getLocalDateString(nextWeek)
 
   const [startDate, setStartDate] = useState(todayStr)
   const [endDate, setEndDate] = useState(nextWeekStr)
@@ -42,7 +49,6 @@ export default function RentButton({
     const start = new Date(startDate)
     const end = new Date(endDate)
     
-    // Calculate difference in milliseconds, then convert to days
     const diffTime = end.getTime() - start.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
@@ -50,12 +56,22 @@ export default function RentButton({
       rentalDays = diffDays
       rentalFee = rentalDays * ratePerDay
     } else {
-      dateError = true // End date is before start date
+      dateError = true 
     }
   }
 
   const totalUpfrontCost = deposit + rentalFee
   const hasEnoughFunds = walletBalance >= totalUpfrontCost && !dateError
+
+  // UX FIX: If they change start date to be after end date, auto-fix end date
+  const handleStartDateChange = (newStartDate: string) => {
+    setStartDate(newStartDate)
+    if (newStartDate >= endDate) {
+      const nextDay = new Date(newStartDate)
+      nextDay.setDate(nextDay.getDate() + 1)
+      setEndDate(getLocalDateString(nextDay))
+    }
+  }
 
   function handleClick() {
     if (dateError) {
@@ -93,7 +109,7 @@ export default function RentButton({
               type="date" 
               value={startDate}
               min={todayStr}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => handleStartDateChange(e.target.value)}
               className="w-full border border-[#E2E8F0] rounded-lg px-2 py-2 text-sm text-[#0F172A] font-medium focus:outline-none focus:border-[#0F172A]"
             />
           </div>
@@ -102,7 +118,7 @@ export default function RentButton({
             <input 
               type="date" 
               value={endDate}
-              min={startDate} // Prevent picking an end date before the start date
+              min={startDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full border border-[#E2E8F0] rounded-lg px-2 py-2 text-sm text-[#0F172A] font-medium focus:outline-none focus:border-[#0F172A]"
             />

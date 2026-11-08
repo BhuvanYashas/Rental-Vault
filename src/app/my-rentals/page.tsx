@@ -8,6 +8,46 @@ import ChatButton from '@/components/ChatButton'
 
 export const dynamic = 'force-dynamic'
 
+// === STRICT TYPES FOR THE DASHBOARD ===
+type RentalTransaction = {
+  id: string
+  status: string
+  start_date: string
+  end_date: string
+  escrow_amount: number
+  listings: {
+    id: string
+    rate_per_day: number
+    deposit: number
+    items: {
+      id: string
+      name: string
+      category: string
+      grade: string
+      state: string
+      custody_events: {
+        id: string
+        state: string
+        notes: string | null
+        photo_url: string | null
+        created_at: string
+      }[]
+    }
+  }
+}
+
+type ClaimData = {
+  id: string
+  status: string
+  damage_amount: number
+  description: string | null
+  dispute_reason: string | null
+  resolution: string | null
+  escalation_reason: string | null
+  platform_resolution: string | null
+  platform_notes: string | null
+}
+
 export default async function MyRentalsPage() {
   const supabase = await createClient()
 
@@ -47,8 +87,8 @@ export default async function MyRentalsPage() {
 
   const claimByTxn = new Map((claims ?? []).map((c) => [c.transaction_id, c]))
 
-  const active = (data || []).filter((t) => t.status === 'ACTIVE')
-  const past = (data || []).filter((t) => t.status !== 'ACTIVE')
+  const active = (data as unknown as RentalTransaction[] || []).filter((t) => t.status === 'ACTIVE')
+  const past = (data as unknown as RentalTransaction[] || []).filter((t) => t.status !== 'ACTIVE')
 
   return (
     <main className="max-w-3xl mx-auto p-8">
@@ -75,7 +115,7 @@ export default async function MyRentalsPage() {
           <h2 className="text-xs font-mono uppercase tracking-widest text-[#0F172A] mb-4 font-bold">Past</h2>
           <div className="space-y-3">
             {past.map((t) => (
-              <RentalRow key={t.id} transaction={t} claim={claimByTxn.get(t.id) ?? null} />
+              <RentalRow key={t.id} transaction={t} claim={claimByTxn.get(t.id) as ClaimData ?? null} />
             ))}
           </div>
         </section>
@@ -92,14 +132,14 @@ export default async function MyRentalsPage() {
   )
 }
 
-function RentalRow({ transaction, claim = null }: { transaction: any, claim?: any }) {
+function RentalRow({ transaction, claim = null }: { transaction: RentalTransaction, claim?: ClaimData | null }) {
   const item = transaction.listings?.items
   if (!item) return null
 
   const isActive = transaction.status === 'ACTIVE'
-  const events = (item.custody_events ?? []).slice().sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  const latestIntakePhoto = events.find((e: any) => e.state === 'RENTED' && e.photo_url)?.photo_url
-  const latestReturnPhoto = events.find((e: any) => e.state === 'IN_VAULT' && e.photo_url)?.photo_url
+  const events = (item.custody_events ?? []).slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const latestIntakePhoto = events.find((e) => e.state === 'RENTED' && e.photo_url)?.photo_url
+  const latestReturnPhoto = events.find((e) => e.state === 'IN_VAULT' && e.photo_url)?.photo_url
 
   return (
     <div className="bg-white border border-[#5C7FA8] rounded-xl p-5 shadow-sm">
@@ -129,25 +169,13 @@ function RentalRow({ transaction, claim = null }: { transaction: any, claim?: an
           {latestIntakePhoto && (
             <div>
               <p className="text-xs font-mono uppercase tracking-widest text-[#0F172A] mb-2 font-bold">Intake</p>
-              <Image
-                src={latestIntakePhoto}
-                alt={`${item.name} intake`}
-                width={400}
-                height={300}
-                className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]"
-              />
+              <Image src={latestIntakePhoto} alt={`${item.name} intake`} width={400} height={300} className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]" />
             </div>
           )}
           {latestReturnPhoto && (
             <div>
               <p className="text-xs font-mono uppercase tracking-widest text-[#0F172A] mb-2 font-bold">Return</p>
-              <Image
-                src={latestReturnPhoto}
-                alt={`${item.name} return`}
-                width={400}
-                height={300}
-                className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]"
-              />
+              <Image src={latestReturnPhoto} alt={`${item.name} return`} width={400} height={300} className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]" />
             </div>
           )}
         </div>
@@ -166,7 +194,7 @@ function RentalRow({ transaction, claim = null }: { transaction: any, claim?: an
   )
 }
 
-function ClaimBanner({ claim }: { claim: any }) {
+function ClaimBanner({ claim }: { claim: ClaimData }) {
   const colorByStatus: Record<string, string> = { OPEN: 'bg-amber-50 border-amber-200', DISPUTED: 'bg-red-50 border-red-200', RESOLVED: 'bg-emerald-50 border-emerald-200', ESCALATED: 'bg-amber-50 border-amber-300' }
   const labelByStatus: Record<string, string> = { OPEN: 'Damage claim filed', DISPUTED: 'Claim disputed — under review', RESOLVED: 'Claim resolved', ESCALATED: 'Re-review requested — awaiting platform' }
   const canEscalate = claim.status === 'RESOLVED' && claim.resolution === 'VAULT_WINS' && !claim.platform_resolution
