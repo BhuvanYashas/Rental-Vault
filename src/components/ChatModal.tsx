@@ -98,7 +98,6 @@ export default function ChatModal({
     })
 
     if (insertError) {
-      console.error("Supabase Insert Error:", insertError)
       setError(`Failed to send: ${insertError.message}`)
       setMessages((prev) => prev.filter(msg => msg.id !== tempMessage.id))
     }
@@ -130,7 +129,6 @@ export default function ChatModal({
 
               return (
                 <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                  
                   {!isMe && (
                     <div className="flex items-center gap-2 mb-1 ml-1">
                       <div className="w-6 h-6 rounded-full bg-[#D97706] flex items-center justify-center text-[10px] text-white font-bold">
