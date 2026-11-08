@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useEffect } from 'react'
 
 export default function TiltCard({
   children,
@@ -10,46 +10,57 @@ export default function TiltCard({
   className?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [rotation, setRotation] = useState({ x: 0, y: 0 })
-  const [isHovering, setIsHovering] = useState(false)
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    const width = rect.width
-    const height = rect.height
-    const mouseX = e.clientX - rect.left
-    const mouseY = e.clientY - rect.top
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
 
-    // Calculate percentage from center (-0.5 to 0.5)
-    const xPct = mouseX / width - 0.5
-    const yPct = mouseY / height - 0.5
+    // Respect user's OS setting for reduced motion
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (mediaQuery.matches) return
 
-    // Adjust the multiplier (e.g., 15) to make the tilt stronger or weaker
-    const tiltX = yPct * -15
-    const tiltY = xPct * 15
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect()
+      const width = rect.width
+      const height = rect.height
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
 
-    setRotation({ x: tiltX, y: tiltY })
-  }
+      const xPct = mouseX / width - 0.5
+      const yPct = mouseY / height - 0.5
 
-  const handleMouseLeave = () => {
-    setRotation({ x: 0, y: 0 })
-    setIsHovering(false)
-  }
+      const tiltX = yPct * -15
+      const tiltY = xPct * 15
+
+      // 👇 Direct DOM manipulation (No React re-renders)
+      el.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.02, 1.02, 1)`
+    }
+
+    const handleMouseEnter = () => {
+      el.style.transition = 'transform 0.1s ease-out'
+    }
+
+    const handleMouseLeave = () => {
+      el.style.transition = 'transform 0.5s ease-out'
+      el.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`
+    }
+
+    el.addEventListener('mousemove', handleMouseMove)
+    el.addEventListener('mouseenter', handleMouseEnter)
+    el.addEventListener('mouseleave', handleMouseLeave)
+
+    return () => {
+      el.removeEventListener('mousemove', handleMouseMove)
+      el.removeEventListener('mouseenter', handleMouseEnter)
+      el.removeEventListener('mouseleave', handleMouseLeave)
+    }
+  }, [])
 
   return (
     <div
       ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={handleMouseLeave}
-      className={`relative transition-transform duration-100 ease-out ${className}`}
-      style={{
-        transform: `perspective(1000px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale3d(${
-          isHovering ? 1.02 : 1
-        }, ${isHovering ? 1.02 : 1}, 1)`,
-        transformStyle: 'preserve-3d',
-      }}
+      className={`relative will-change-transform ${className}`}
+      style={{ transformStyle: 'preserve-3d' }}
     >
       {children}
     </div>

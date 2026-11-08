@@ -25,20 +25,29 @@ export default function NewItemPage() {
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState('Appliance')
+  const [categoryTouched, setCategoryTouched] = useState(false) // 👈 Tracks manual selection
   const [serialNumber, setSerialNumber] = useState('')
   const [ratePerDay, setRatePerDay] = useState('')
   const [deposit, setDeposit] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [notes, setNotes] = useState('') // 👈 New state for notes
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newName = e.target.value
     setName(newName)
     
-    // Auto-select category based on what they typed
-    const suggested = suggestCategory(newName)
-    if (suggested) {
-      setCategory(suggested)
+    // Only auto-select if the user hasn't manually picked a category
+    if (!categoryTouched) {
+      const suggested = suggestCategory(newName)
+      if (suggested) {
+        setCategory(suggested)
+      }
     }
+  }
+
+  function handleCategoryChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setCategory(e.target.value)
+    setCategoryTouched(true) // Mark as manually touched
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -60,7 +69,7 @@ export default function NewItemPage() {
         depositNum,
         photoUrl,
         serialNumber,
-        ''
+        notes // 👈 Now passing the actual notes
       )
 
       if (result.error) {
@@ -111,7 +120,7 @@ export default function NewItemPage() {
               required 
               placeholder="e.g. DSLR Camera"
               value={name} 
-              onChange={handleNameChange} // 👈 Now uses the smart handler
+              onChange={handleNameChange}
               list="item-suggestions" 
               className="w-full border border-[#5C7FA8] rounded-lg px-3 py-2.5 text-[#0F172A] placeholder:text-[#5C7FA8] focus:outline-none focus:border-[#0F172A]"
             />
@@ -138,7 +147,7 @@ export default function NewItemPage() {
             </label>
             <select
               value={category} 
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={handleCategoryChange} // 👈 Uses the new handler
               className="w-full border border-[#5C7FA8] rounded-lg px-3 py-2.5 text-[#0F172A] focus:outline-none focus:border-[#0F172A] bg-white"
             >
               <option value="Appliance">Appliance</option>
@@ -200,6 +209,20 @@ export default function NewItemPage() {
               className="w-full border border-[#5C7FA8] rounded-lg px-3 py-2.5 text-[#0F172A] placeholder:text-[#5C7FA8] focus:outline-none focus:border-[#0F172A]"
             />
           </div>
+        </div>
+
+        {/* CONDITION NOTES */}
+        <div>
+          <label className="block text-xs font-mono uppercase tracking-widest text-[#0F172A] mb-2 font-bold">
+            Item Description / Notes (Optional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g. Original box included. Small scratch on the bottom."
+            rows={3}
+            className="w-full border border-[#5C7FA8] rounded-lg px-3 py-2.5 text-[#0F172A] placeholder:text-[#5C7FA8] focus:outline-none focus:border-[#0F172A]"
+          />
         </div>
 
         {error && (

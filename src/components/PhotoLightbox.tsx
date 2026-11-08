@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 export default function PhotoLightbox({
   open,
@@ -15,22 +16,17 @@ export default function PhotoLightbox({
   itemName: string
   onClose: () => void
 }) {
-  // State to track if we are currently zooming into a specific image
   const [zoomedImage, setZoomedImage] = useState<string | null>(null)
 
-  // Close everything if the user presses Escape
   useEffect(() => {
     if (!open) {
-      setZoomedImage(null) // reset zoom when closed
+      setZoomedImage(null)
       return
     }
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (zoomedImage) {
-          setZoomedImage(null) // if zoomed, just un-zoom
-        } else {
-          onClose() // if not zoomed, close the whole lightbox
-        }
+        if (zoomedImage) setZoomedImage(null)
+        else onClose()
       }
     }
     window.addEventListener('keydown', handler)
@@ -39,27 +35,31 @@ export default function PhotoLightbox({
 
   if (!open) return null
 
-  // 1. If an image is selected for zooming, show the full-screen view
+  // 1. Full-screen zoomed view
   if (zoomedImage) {
     return (
       <div
         onClick={() => setZoomedImage(null)}
-        className="fixed inset-0 bg-black z-[60] flex items-center justify-center p-4 cursor-zoom-out"
+        className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 cursor-zoom-out"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={zoomedImage}
-          alt="Zoomed evidence"
-          className="max-w-full max-h-[90vh] object-contain rounded"
-        />
-        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm font-mono bg-black/50 px-4 py-2 rounded-full">
+        <div className="relative w-full h-full max-w-6xl max-h-[90vh]">
+          <Image
+            src={zoomedImage}
+            alt="Zoomed evidence"
+            fill
+            className="object-contain"
+            sizes="100vw"
+            priority
+          />
+        </div>
+        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm font-mono bg-black/50 px-4 py-2 rounded-full pointer-events-none">
           Click anywhere or press Esc to close
         </p>
       </div>
     )
   }
 
-  // 2. Otherwise, show the side-by-side comparison view
+  // 2. Side-by-side comparison view
   return (
     <div
       onClick={onClose}
@@ -70,12 +70,13 @@ export default function PhotoLightbox({
         className="bg-white rounded-2xl max-w-5xl w-full p-6 space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-neutral-900">
-            {itemName} — evidence
+          <h2 className="text-lg font-bold text-[#0F172A]">
+            {itemName} — Evidence
           </h2>
           <button
+            type="button"
             onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-900 text-2xl leading-none"
+            className="text-neutral-500 hover:text-neutral-900 text-2xl leading-none bg-neutral-100 hover:bg-neutral-200 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
             aria-label="Close"
           >
             ×
@@ -85,35 +86,45 @@ export default function PhotoLightbox({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {intakeUrl && (
             <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2">
+              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
                 Intake (before)
               </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={intakeUrl}
-                alt="Intake"
+              <div 
+                className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
                 onClick={() => setZoomedImage(intakeUrl)}
-                className="w-full rounded-lg border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
-              />
+              >
+                <Image
+                  src={intakeUrl}
+                  alt="Intake"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
             </div>
           )}
           {returnUrl && (
             <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2">
+              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
                 Return (after)
               </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={returnUrl}
-                alt="Return"
+              <div 
+                className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
                 onClick={() => setZoomedImage(returnUrl)}
-                className="w-full rounded-lg border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
-              />
+              >
+                <Image
+                  src={returnUrl}
+                  alt="Return"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
             </div>
           )}
         </div>
 
-        <p className="text-xs text-neutral-500 text-center flex items-center justify-center gap-2">
+        <p className="text-xs text-neutral-500 text-center flex items-center justify-center gap-2 font-medium">
           <span>🔍 Click any photo to zoom in</span>
           <span>·</span>
           <span>Press Esc to close</span>

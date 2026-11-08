@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -10,20 +11,17 @@ export default async function OwnerDashboard() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?redirect=/owner/dashboard')
 
+  // 1. Fetch items and their listings
   const { data: items, error } = await supabase
     .from('items')
     .select(`
       id, name, category, grade, state, photos, created_at,
       listings ( 
-        id, rate_per_day, deposit, active,
-        transactions ( id, status, start_date, end_date, escrow_amount )
+        id, rate_per_day, deposit, active
       )
     `)
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
-
-  // 🚨 DEBUG LOG: Check your VS Code terminal for this output!
-  console.log("OWNER DASHBOARD DATA:", JSON.stringify(items, null, 2))
 
   if (error) {
     return (
@@ -35,23 +33,26 @@ export default async function OwnerDashboard() {
     )
   }
 
-  let totalEarned = 0
-  let totalEscrow = 0
+  // 2. Fetch exact earnings from the wallet ledger
+  const { data: earnings } = await supabase
+    .from('wallet_transactions')
+    .select('amount')
+    .eq('user_id', user.id)
+    .eq('type', 'ESCROW_RELEASE')
 
-  items?.forEach((item) => {
-    const listing = item.listings?.[0]
-    const transactions = listing?.transactions ?? []
-    transactions.forEach((txn: any) => {
-      if (txn.status === 'RETURNED') {
-        const start = new Date(txn.start_date)
-        const end = new Date(txn.end_date)
-        const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
-        totalEarned += (listing.rate_per_day * days)
-      } else if (txn.status === 'ACTIVE') {
-        totalEscrow += txn.escrow_amount
-      }
-    })
-  })
+  const totalEarned = earnings?.reduce((sum, txn) => sum + txn.amount, 0) || 0
+
+  // 3. Fetch active escrow amounts
+  const { data: activeTxns } = await supabase
+    .from('transactions')
+    .select(`
+      escrow_amount,
+      listings!inner ( items!inner ( owner_id ) )
+    `)
+    .eq('status', 'ACTIVE')
+    .eq('listings.items.owner_id', user.id)
+
+  const totalEscrow = activeTxns?.reduce((sum, txn) => sum + txn.escrow_amount, 0) || 0
 
   const totalItems = items?.length ?? 0
   const activeListings = items?.filter((i) => i.listings?.[0]?.active === true).length ?? 0
@@ -95,6 +96,10 @@ export default async function OwnerDashboard() {
         {!items || items.length === 0 ? (
           <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-12 text-center shadow-sm">
              <p className="text-[#0F172A] font-bold text-xl mb-2">You haven't listed anything yet.</p>
+             <p className="text-[#1E293B] font-medium mb-6">Turn your idle goods into rental income.</p>
+             <Link href="/owner/new-item" className="bg-[#D97706] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-[#B45309] transition shadow-sm inline-block">
+              List your first item
+            </Link>
           </div>
         ) : (
           <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl overflow-hidden shadow-sm">
@@ -118,8 +123,13 @@ export default async function OwnerDashboard() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             {item.photos?.[0] ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={item.photos[0]} alt={item.name} className="w-12 h-12 object-cover rounded-xl border border-[#E2E8F0] shadow-sm group-hover:scale-105 transition-transform" />
+                              <Image 
+                                src={item.photos[0]} 
+                                alt={item.name} 
+                                width={48}
+                                height={48}
+                                className="w-12 h-12 object-cover rounded-xl border border-[#E2E8F0] shadow-sm group-hover:scale-105 transition-transform" 
+                              />
                             ) : (
                               <div className="w-12 h-12 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#5C7FA8]">N/A</div>
                             )}
@@ -173,4 +183,4 @@ function StatCard({ label, value, icon }: { label: string, value: number, icon: 
       <p className="relative z-10 text-4xl font-extrabold tracking-tight text-[#0F172A]">{value}</p>
     </div>
   )
-} 
+}

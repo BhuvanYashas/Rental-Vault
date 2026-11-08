@@ -52,11 +52,11 @@ export default function DisputeClaimForm({
         onChange={(e) => setReason(e.target.value)}
         placeholder="Explain why you disagree — e.g. the scratch was already there at intake, see the intake photo"
         rows={3}
-        className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-500"
+        className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-500 font-medium focus:outline-none focus:border-red-400"
       />
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 font-bold">
           {error}
         </p>
       )}
@@ -65,15 +65,15 @@ export default function DisputeClaimForm({
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 bg-red-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+          className="flex-1 bg-red-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-red-700 disabled:opacity-50"
         >
           {isPending ? 'Submitting…' : 'Submit dispute'}
         </button>
         <button
-          type="button"
+          type="button" // 👈 Critical: Prevents form submission
           onClick={onCancel}
           disabled={isPending}
-          className="px-4 bg-neutral-200 text-neutral-900 rounded-lg py-2 text-sm font-medium hover:bg-neutral-300 disabled:opacity-50"
+          className="px-4 bg-neutral-200 text-neutral-900 rounded-lg py-2 text-sm font-bold hover:bg-neutral-300 disabled:opacity-50"
         >
           Cancel
         </button>

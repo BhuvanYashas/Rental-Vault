@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { openClaim } from '@/app/actions/openClaim'
 
 type PhotoOption = {
@@ -78,13 +79,13 @@ export default function OpenClaimForm({
       className="mt-4 p-5 bg-amber-50 border border-amber-200 rounded-xl space-y-4"
     >
       <div>
-        <p className="text-xs font-mono uppercase tracking-widest text-amber-700">
+        <p className="text-xs font-mono uppercase tracking-widest text-amber-700 font-bold">
           Open claim — {itemName}
         </p>
       </div>
 
       <div>
-        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2">
+        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
           Evidence photos
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -93,7 +94,7 @@ export default function OpenClaimForm({
             return (
               <button
                 key={p.url}
-                type="button"
+                type="button" // 👈 Critical: Prevents form submission
                 onClick={() => togglePhoto(p.url)}
                 className={`relative text-left rounded-lg overflow-hidden border-2 transition ${
                   isSelected
@@ -101,13 +102,15 @@ export default function OpenClaimForm({
                     : 'border-neutral-200 hover:border-neutral-400'
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={p.url}
-                  alt={p.label}
-                  className="w-full h-32 object-cover"
-                />
-                <div className="absolute top-2 left-2 bg-white/90 text-xs font-mono px-2 py-1 rounded">
+                <div className="relative w-full h-32">
+                  <Image
+                    src={p.url}
+                    alt={p.label}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="absolute top-2 left-2 bg-white/90 text-xs font-mono font-bold px-2 py-1 rounded">
                   {p.label}
                 </div>
                 {isSelected && (
@@ -122,7 +125,7 @@ export default function OpenClaimForm({
       </div>
 
       <div>
-        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2">
+        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
           Damage amount (₹)
         </label>
         <input
@@ -131,12 +134,12 @@ export default function OpenClaimForm({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="e.g. 500"
-          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900"
+          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 font-medium"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2">
+        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
           Description
         </label>
         <textarea
@@ -144,12 +147,12 @@ export default function OpenClaimForm({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Describe the damage — e.g. 3cm scratch on the left edge, dent on the top corner"
           rows={3}
-          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-500"
+          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-500 font-medium"
         />
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 font-bold">
           {error}
         </p>
       )}
@@ -158,15 +161,15 @@ export default function OpenClaimForm({
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 bg-amber-600 text-white rounded-lg py-2 font-medium hover:bg-amber-700 disabled:opacity-50"
+          className="flex-1 bg-amber-600 text-white rounded-lg py-2 font-bold hover:bg-amber-700 disabled:opacity-50"
         >
           {isPending ? 'Filing claim…' : 'File claim'}
         </button>
         <button
-          type="button"
+          type="button" // 👈 Critical: Prevents form submission
           onClick={onCancel}
           disabled={isPending}
-          className="px-5 bg-neutral-200 text-neutral-900 rounded-lg py-2 font-medium hover:bg-neutral-300 disabled:opacity-50"
+          className="px-5 bg-neutral-200 text-neutral-900 rounded-lg py-2 font-bold hover:bg-neutral-300 disabled:opacity-50"
         >
           Cancel
         </button>
