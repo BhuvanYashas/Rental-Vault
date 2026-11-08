@@ -36,9 +36,30 @@ export default async function OperatorPage() {
 
   const { data: rentals } = await supabase.from('transactions').select(`id, start_date, end_date, escrow_amount, renter_id, created_at, listings ( id, rate_per_day, items ( id, name, category, grade ) )`).eq('status', 'ACTIVE').order('created_at', { ascending: false })
   
-  const { data: returned } = await supabase.from('transactions').select(`id, start_date, end_date, escrow_amount, renter_id, created_at, listings ( id, items ( id, name, category, custody_events ( id, state, photo_url, created_at ) ) )`).eq('status', 'RETURNED').order('created_at', { ascending: false }).limit(20)
+  const { data: returned } = await supabase
+    .from('transactions')
+    .select(`
+      id, start_date, end_date, escrow_amount, renter_id, created_at, 
+      listings ( id, items ( id, name, category, custody_events ( id, state, photo_url, created_at ) ) )
+    `)
+    .eq('status', 'RETURNED')
+    .order('created_at', { ascending: false })
+    .limit(20)
   
-  // 👇 1. FIXED CLAIMS QUERY: Added escalation and platform columns
+  // Fetch reviews separately for the returned items
+  let reviewMap = new Map()
+  if (returned && returned.length > 0) {
+    const txnIds = returned.map(r => r.id)
+    const { data: reviews } = await supabase
+      .from('reviews')
+      .select('transaction_id, rating')
+      .in('transaction_id', txnIds)
+      
+    if (reviews) {
+      reviewMap = new Map(reviews.map(r => [r.transaction_id, r]))
+    }
+  }
+  
   const { data: claims } = await supabase
     .from('claims')
     .select('id, transaction_id, damage_amount, description, status, dispute_reason, disputed_at, resolution, resolved_at, escalation_reason, escalated_at, platform_resolution, platform_notes, platform_resolved_at')
@@ -59,14 +80,15 @@ export default async function OperatorPage() {
   const totalItems = items?.length ?? 0
   const inVault = items?.filter((i) => i.state === 'IN_VAULT').length ?? 0
   const rented = items?.filter((i) => i.state === 'RENTED').length ?? 0
-  // 👇 2. Added ESCALATED to the open claims count
   const openClaims = claims?.filter((c) => c.status === 'OPEN' || c.status === 'DISPUTED' || c.status === 'ESCALATED').length ?? 0
 
   return (
     <main className="max-w-6xl mx-auto p-8 space-y-12">
       
       <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-[#D97706] mb-2 font-bold">Operator view</p>
+        <div className="inline-block bg-[#D97706] text-white px-3 py-1 rounded-md text-xs font-mono uppercase tracking-widest font-bold mb-3 shadow-sm">
+          Operator view
+        </div>
         <h1 className="text-4xl font-extrabold tracking-tight text-[#0F172A]">Vault Command Center</h1>
         <p className="text-[#1E293B] mt-2 font-medium text-lg">Custody, verification, and audit at a glance.</p>
       </header>
@@ -124,13 +146,7 @@ export default async function OperatorPage() {
                 <div key={listing.id} className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex justify-between items-center gap-4">
                   <div className="flex items-center gap-4">
                     {item?.photos?.[0] ? (
-                      <Image 
-                        src={item.photos[0]} 
-                        alt={item.name} 
-                        width={64} 
-                        height={64} 
-                        className="w-16 h-16 object-cover rounded-xl border border-[#E2E8F0]" 
-                      />
+                      <Image src={item.photos[0]} alt={item.name} width={64} height={64} className="w-16 h-16 object-cover rounded-xl border border-[#E2E8F0]" />
                     ) : (
                       <div className="w-16 h-16 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#5C7FA8]">
                          <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -183,7 +199,6 @@ export default async function OperatorPage() {
                     </div>
                     <div className="flex flex-col gap-2 w-full md:w-64">
                       <ChatButton transactionId={r.id} itemName={item?.name || 'Item'} />
-                      {/* 👇 3. FIXED: Added ratePerDay prop */}
                       <ReturnButton 
                         listingId={listing?.id} 
                         itemId={item?.id} 
@@ -222,10 +237,24 @@ export default async function OperatorPage() {
               const returnPhoto = events.find((e: any) => e.state === 'IN_VAULT' && e.photo_url)?.photo_url
               const renter = r.renter_id ? profileMap.get(r.renter_id) : null
               const claim = claimsByTxn.get(r.id) ?? null
+              
+              // Get review from our Map
+              const review = reviewMap.get(r.id) || null
+
               return (
                 <ReturnedRentalRow
-                  key={r.id} transactionId={r.id} itemName={item?.name ?? '—'} category={item?.category ?? ''} renterName={renter?.full_name ?? '—'}
-                  startDate={r.start_date} endDate={r.end_date} escrowAmount={r.escrow_amount} intakePhoto={intakePhoto ?? null} returnPhoto={returnPhoto ?? null} claim={claim}
+                  key={r.id} 
+                  transactionId={r.id} 
+                  itemName={item?.name ?? '—'} 
+                  category={item?.category ?? ''} 
+                  renterName={renter?.full_name ?? '—'}
+                  startDate={r.start_date} 
+                  endDate={r.end_date} 
+                  escrowAmount={r.escrow_amount} 
+                  intakePhoto={intakePhoto ?? null} 
+                  returnPhoto={returnPhoto ?? null} 
+                  claim={claim}
+                  review={review} 
                 />
               )
             })}
@@ -237,7 +266,7 @@ export default async function OperatorPage() {
         <h2 className="text-lg font-bold text-[#0F172A] mb-4">Vault Inventory</h2>
         <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
+            <table className="w-full text-sm min-w-150">
               <thead className="bg-[#F8FAFC] text-left border-b border-[#E2E8F0]">
                 <tr>
                   <th className="px-6 py-4 font-mono text-xs uppercase tracking-widest text-[#1E293B] font-bold">Item</th>
@@ -249,7 +278,7 @@ export default async function OperatorPage() {
               </thead>
               <tbody className="divide-y divide-[#E2E8F0]">
                 {items?.map((it) => (
-                  <tr key={it.id} className="hover:bg-[#F8FAFC]/50 transition-colors group">
+                  <tr key={it.id} className="hover:bg-[#F8FAFC] transition-colors group">
                     <td className="px-6 py-4 font-bold text-[#0F172A] group-hover:text-[#D97706] transition-colors">{it.name}</td>
                     <td className="px-6 py-4 text-[#1E293B] font-medium">
                       <span className="bg-[#F1F5F9] px-2.5 py-1 rounded-md text-xs font-bold text-[#0F172A]">{it.category}</span>
@@ -283,7 +312,7 @@ export default async function OperatorPage() {
               const item = e.items as any
               const isReturn = e.state === 'IN_VAULT'
               return (
-                <div key={e.id} className="p-5 flex items-center justify-between text-sm hover:bg-[#F8FAFC]/50 transition-colors">
+                <div key={e.id} className="p-5 flex items-center justify-between text-sm hover:bg-[#F8FAFC] transition-colors">
                   <div className="flex items-center gap-4">
                     <span className={`w-3 h-3 rounded-full shadow-sm ${isReturn ? 'bg-emerald-500' : 'bg-[#D97706]'}`} />
                     <div>

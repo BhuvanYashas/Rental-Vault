@@ -37,7 +37,7 @@ export default async function ProfilePage() {
   const currentRole = roleConfig[profile?.role || 'renter'] || roleConfig.renter
 
   return (
-    <main className="max-w-4xl mx-auto p-8">
+    <main className="max-w-5xl mx-auto p-8">
       <Link href="/" className="text-sm text-[#0F172A] hover:text-[#D97706] font-bold mb-8 inline-block transition-colors">
         ← Back to home
       </Link>
@@ -47,9 +47,10 @@ export default async function ProfilePage() {
         <p className="text-[#1E293B] mt-2 font-medium text-lg">Manage your account and view recent activity.</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* 👇 IMPROVED LAYOUT GRID 👇 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
-        {/* Left Column */}
+        {/* Left Column: Identity & KYC */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl shadow-lg overflow-hidden relative">
             <div className="bg-[#0F172A] p-6 pb-12 flex flex-col items-center text-center relative z-10">
@@ -79,28 +80,27 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* Right Column */}
+        {/* Right Column: Wallet, Details, Activity */}
         <div className="lg:col-span-2 space-y-6">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm">
-                <p className="text-xs font-mono uppercase tracking-widest text-[#5C7FA8] font-bold mb-2">Age</p>
-                <p className="text-lg font-bold text-[#0F172A]">{profile?.age ? `${profile.age} years old` : 'Not set'}</p>
-              </div>
-              <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm">
-                <p className="text-xs font-mono uppercase tracking-widest text-[#5C7FA8] font-bold mb-2">Member Since</p>
-                <p className="text-lg font-bold text-[#0F172A]">
-                  {new Date(profile?.created_at || user.created_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
-                </p>
-              </div>
+          {/* 1. Wallet Card (Top) */}
+          <WalletCard balance={profile?.wallet_balance || 0} />
+
+          {/* 2. Age & Member Since (Side by side) */}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm">
+              <p className="text-xs font-mono uppercase tracking-widest text-[#5C7FA8] font-bold mb-2">Age</p>
+              <p className="text-xl font-bold text-[#0F172A]">{profile?.age ? `${profile.age} years old` : 'Not set'}</p>
             </div>
-            
-            <div>
-              <WalletCard balance={profile?.wallet_balance || 0} />
+            <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm">
+              <p className="text-xs font-mono uppercase tracking-widest text-[#5C7FA8] font-bold mb-2">Member Since</p>
+              <p className="text-xl font-bold text-[#0F172A]">
+                {new Date(profile?.created_at || user.created_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+              </p>
             </div>
           </div>
 
+          {/* 3. Recent Activity */}
           <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl p-6 shadow-sm">
             <h3 className="text-lg font-bold text-[#0F172A] mb-4">Recent Activity</h3>
             {!activity || activity.length === 0 ? (
@@ -120,6 +120,7 @@ export default async function ProfilePage() {
               </div>
             )}
           </div>
+
         </div>
       </div>
     </main>

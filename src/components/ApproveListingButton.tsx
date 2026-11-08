@@ -30,6 +30,7 @@ export default function ApproveListingButton({
   return (
     <div>
       <button
+        type="button" // 👈 ADDED
         onClick={handleApprove}
         disabled={isPending}
         className="bg-[#D97706] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#B45309] transition shadow-sm disabled:opacity-50 whitespace-nowrap"

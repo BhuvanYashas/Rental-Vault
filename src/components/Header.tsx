@@ -24,7 +24,7 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-[#0F172A] bg-[#0F172A] shadow-lg sticky top-0 z-50">
+    <header className="border-b border-white/10 bg-[#0F172A]/90 backdrop-blur-md shadow-lg sticky top-0 z-50">
       <div className="w-full px-6 md:px-10 py-3 flex items-center justify-between">
         
         {/* Left Side: Logo */}

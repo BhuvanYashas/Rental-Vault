@@ -29,7 +29,7 @@ export default function PlatformResolveButton({ claimId }: { claimId: string }) 
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2">
+        <label className="block text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
           Platform notes (shown to renter)
         </label>
         <textarea
@@ -37,26 +37,29 @@ export default function PlatformResolveButton({ claimId }: { claimId: string }) 
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Explain the reasoning behind your ruling"
           rows={3}
-          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-500"
+          disabled={isPending}
+          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 disabled:opacity-50"
         />
       </div>
       <div className="flex gap-2">
         <button
+          type="button" // 👈 ADDED
           onClick={() => handleResolve('VAULT_WINS')}
           disabled={isPending}
-          className="flex-1 bg-red-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+          className="flex-1 bg-red-600 text-white rounded-lg py-2.5 text-sm font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
         >
           {isPending ? 'Ruling…' : 'Uphold vault'}
         </button>
         <button
+          type="button" // 👈 ADDED
           onClick={() => handleResolve('RENTER_WINS')}
           disabled={isPending}
-          className="flex-1 bg-emerald-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+          className="flex-1 bg-emerald-600 text-white rounded-lg py-2.5 text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors"
         >
           {isPending ? 'Ruling…' : 'Rule for renter'}
         </button>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 font-bold">{error}</p>}
     </div>
   )
 }

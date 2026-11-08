@@ -9,8 +9,9 @@ export default function DisputeClaimButton({ claimId }: { claimId: string }) {
   if (!showForm) {
     return (
       <button
+        type="button" // 👈 ADDED
         onClick={() => setShowForm(true)}
-        className="mt-3 text-sm font-medium text-red-700 hover:text-red-900 underline"
+        className="mt-3 text-sm font-bold text-red-700 hover:text-red-900 underline transition-colors"
       >
         Dispute this claim
       </button>

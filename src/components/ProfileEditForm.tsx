@@ -33,6 +33,7 @@ export default function ProfileEditForm({ initialUsername, initialAge }: { initi
   if (!isEditing) {
     return (
       <button
+        type="button" // 👈 ADDED
         onClick={() => setIsEditing(true)}
         className="bg-white border border-[#5C7FA8]/40 text-[#0F172A] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-colors shadow-sm w-full"
       >

@@ -3,10 +3,13 @@
 :root {
   --background: #7BA3D0;
   --foreground: #0F172A;
-  color-scheme: light;
+  color-scheme: only light;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  /* 👇 This adds a subtle dot grid texture to the whole app */
+  background-image: radial-gradient(rgba(15, 23, 42, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
   color: var(--foreground);
 }

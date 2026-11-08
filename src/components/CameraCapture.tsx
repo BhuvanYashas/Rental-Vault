@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
 type Props = {
@@ -21,7 +22,6 @@ export default function CameraCapture({
   const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Attach the stream to the video element AFTER it renders
   useEffect(() => {
     if (!isOpen) return
     const video = videoRef.current
@@ -29,29 +29,16 @@ export default function CameraCapture({
     if (!video || !stream) return
 
     video.srcObject = stream
-    video.play().catch(() => {
-      // Autoplay can be blocked; not fatal, browser will play on user gesture
-    })
+    video.play().catch(() => {})
   }, [isOpen])
 
   async function openCamera() {
     setError(null)
+    setPreview(null) // Reset preview when opening camera
 
     const attempts: MediaStreamConstraints[] = [
-      {
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      },
-      {
-        video: {
-          facingMode: { ideal: 'user' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      },
+      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+      { video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
       { video: true },
     ]
 
@@ -76,16 +63,14 @@ export default function CameraCapture({
       return
     }
 
-    // Sanity check: does the stream actually have a video track?
-    const videoTracks = stream.getVideoTracks()
-    if (videoTracks.length === 0) {
+    if (stream.getVideoTracks().length === 0) {
       stream.getTracks().forEach((t) => t.stop())
       setError('No video track available from camera')
       return
     }
 
     streamRef.current = stream
-    setIsOpen(true) // this triggers the useEffect above
+    setIsOpen(true) 
   }
 
   const stopCamera = useCallback(() => {
@@ -129,7 +114,6 @@ export default function CameraCapture({
     }
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.9),
     )
@@ -143,9 +127,7 @@ export default function CameraCapture({
     stopCamera()
 
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setError('You must be signed in')
       setIsUploading(false)
@@ -155,11 +137,7 @@ export default function CameraCapture({
     const path = `${user.id}/${Date.now()}-capture.jpg`
     const { error: uploadError } = await supabase.storage
       .from('item-photos')
-      .upload(path, blob, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: 'image/jpeg',
-      })
+      .upload(path, blob, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' })
 
     if (uploadError) {
       setError(uploadError.message)
@@ -167,9 +145,7 @@ export default function CameraCapture({
       return
     }
 
-    const { data: urlData } = supabase.storage
-      .from('item-photos')
-      .getPublicUrl(path)
+    const { data: urlData } = supabase.storage.from('item-photos').getPublicUrl(path)
 
     setPreview(urlData.publicUrl)
     setIsUploading(false)
@@ -178,7 +154,7 @@ export default function CameraCapture({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-mono uppercase tracking-widest text-neutral-600">
+      <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 font-bold">
         {label}
       </p>
 
@@ -189,7 +165,7 @@ export default function CameraCapture({
           type="button"
           onClick={openCamera}
           disabled={isUploading}
-          className="w-full bg-[#D97706] text-white rounded-xl py-3 font-medium hover:bg-neutral-800 disabled:opacity-50"
+          className="w-full bg-[#D97706] text-white rounded-xl py-3 font-medium hover:bg-[#B45309] transition-colors disabled:opacity-50"
         >
           {isUploading ? 'Uploading…' : '📷 Open Camera'}
         </button>
@@ -198,29 +174,13 @@ export default function CameraCapture({
       {isOpen && (
         <div className="space-y-3">
           <div className="rounded-xl overflow-hidden border border-neutral-300 bg-black">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-64 object-cover"
-            />
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-64 object-cover" />
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={captureAndUpload}
-              disabled={isUploading}
-              className="flex-1 bg-amber-600 text-white rounded-xl py-3 font-medium hover:bg-amber-700 disabled:opacity-50"
-            >
+            <button type="button" onClick={captureAndUpload} disabled={isUploading} className="flex-1 bg-[#D97706] text-white rounded-xl py-3 font-medium hover:bg-[#B45309] transition-colors disabled:opacity-50">
               {isUploading ? 'Uploading…' : 'Capture'}
             </button>
-            <button
-              type="button"
-              onClick={stopCamera}
-              disabled={isUploading}
-              className="px-5 bg-neutral-200 text-neutral-900 rounded-xl py-3 font-medium hover:bg-neutral-300 disabled:opacity-50"
-            >
+            <button type="button" onClick={stopCamera} disabled={isUploading} className="px-5 bg-neutral-200 text-neutral-900 rounded-xl py-3 font-medium hover:bg-neutral-300 transition-colors disabled:opacity-50">
               Cancel
             </button>
           </div>
@@ -228,18 +188,18 @@ export default function CameraCapture({
       )}
 
       {preview && (
-        <div className="border border-neutral-200 rounded-lg overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={preview}
-            alt="Captured photo"
-            className="w-full h-48 object-cover"
-          />
+        <div className="space-y-3">
+          <div className="relative w-full h-48 rounded-lg overflow-hidden border border-neutral-200">
+            <Image src={preview} alt="Captured photo" fill className="object-cover" />
+          </div>
+          <button type="button" onClick={openCamera} className="w-full bg-white border border-[#E2E8F0] text-[#0F172A] rounded-xl py-2 font-bold hover:bg-[#F8FAFC] transition-colors">
+            Retake Photo
+          </button>
         </div>
       )}
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 font-medium">
           {error}
         </p>
       )}
