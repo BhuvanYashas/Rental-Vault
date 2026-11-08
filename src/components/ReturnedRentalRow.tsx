@@ -107,6 +107,7 @@ export default function ReturnedRentalRow({
               <span className="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
               RETURNED
             </span>
+            {/* USE CHATBUTTON HERE */}
             <ChatButton transactionId={transactionId} itemName={itemName} />
           </div>
 

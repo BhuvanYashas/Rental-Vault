@@ -35,7 +35,6 @@ export default function PhotoLightbox({
 
   if (!open) return null
 
-  // 1. Full-screen zoomed view
   if (zoomedImage) {
     return (
       <div
@@ -52,14 +51,10 @@ export default function PhotoLightbox({
             priority
           />
         </div>
-        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm font-mono bg-black/50 px-4 py-2 rounded-full pointer-events-none">
-          Click anywhere or press Esc to close
-        </p>
       </div>
     )
   }
 
-  // 2. Side-by-side comparison view
   return (
     <div
       onClick={onClose}
@@ -77,7 +72,6 @@ export default function PhotoLightbox({
             type="button"
             onClick={onClose}
             className="text-neutral-500 hover:text-neutral-900 text-2xl leading-none bg-neutral-100 hover:bg-neutral-200 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-            aria-label="Close"
           >
             ×
           </button>
@@ -86,49 +80,27 @@ export default function PhotoLightbox({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {intakeUrl && (
             <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
-                Intake (before)
-              </p>
+              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">Intake (before)</p>
               <div 
                 className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
                 onClick={() => setZoomedImage(intakeUrl)}
               >
-                <Image
-                  src={intakeUrl}
-                  alt="Intake"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
+                <Image src={intakeUrl} alt="Intake" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
               </div>
             </div>
           )}
           {returnUrl && (
             <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">
-                Return (after)
-              </p>
+              <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 mb-2 font-bold">Return (after)</p>
               <div 
                 className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-neutral-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
                 onClick={() => setZoomedImage(returnUrl)}
               >
-                <Image
-                  src={returnUrl}
-                  alt="Return"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
+                <Image src={returnUrl} alt="Return" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
               </div>
             </div>
           )}
         </div>
-
-        <p className="text-xs text-neutral-500 text-center flex items-center justify-center gap-2 font-medium">
-          <span>🔍 Click any photo to zoom in</span>
-          <span>·</span>
-          <span>Press Esc to close</span>
-        </p>
       </div>
     </div>
   )

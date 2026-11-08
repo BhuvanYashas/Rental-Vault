@@ -176,7 +176,6 @@ export default function ChatModal({
             </button>
           </form>
         </div>
-
       </div>
     </div>
   )
