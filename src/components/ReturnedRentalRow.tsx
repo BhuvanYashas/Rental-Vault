@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import OpenClaimForm from './OpenClaimForm'
 import ResolveClaimButton from './ResolveClaimButton'
 import PhotoLightbox from './PhotoLightbox'
 import ChatModal from './ChatModal'
 
-// === SECTION: TYPES ===
 type Claim = {
   id: string
   damage_amount: number
@@ -18,7 +18,6 @@ type Claim = {
   resolved_at: string | null
 } | null
 
-// === SECTION: MAIN COMPONENT ===
 export default function ReturnedRentalRow({
   transactionId,
   itemName,
@@ -53,25 +52,33 @@ export default function ReturnedRentalRow({
   return (
     <div className="bg-white border border-[#5C7FA8]/30 rounded-3xl shadow-sm flex flex-col lg:flex-row overflow-hidden hover:shadow-md transition-shadow group">
       
-      {/* --- COLUMN 1: EVIDENCE PHOTOS (Clickable) --- */}
       <div className="lg:w-[30%] bg-[#F8FAFC] p-4 flex flex-col gap-2 border-b lg:border-b-0 lg:border-r border-[#E2E8F0]">
         {intakePhoto && (
           <div onClick={() => setLightboxOpen(true)} className="relative rounded-xl overflow-hidden border border-[#E2E8F0] cursor-pointer group/img">
             <span className="absolute top-2 left-2 z-10 bg-[#0F172A]/80 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Intake</span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={intakePhoto} alt="Intake" className="w-full h-24 lg:h-28 object-cover group-hover/img:scale-105 transition-transform duration-300" />
+            <Image 
+              src={intakePhoto} 
+              alt="Intake" 
+              width={400}
+              height={300}
+              className="w-full h-24 lg:h-28 object-cover group-hover/img:scale-105 transition-transform duration-300" 
+            />
           </div>
         )}
         {returnPhoto && (
           <div onClick={() => setLightboxOpen(true)} className="relative rounded-xl overflow-hidden border border-[#E2E8F0] cursor-pointer group/img">
             <span className="absolute top-2 left-2 z-10 bg-[#D97706]/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Return</span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={returnPhoto} alt="Return" className="w-full h-24 lg:h-28 object-cover group-hover/img:scale-105 transition-transform duration-300" />
+            <Image 
+              src={returnPhoto} 
+              alt="Return" 
+              width={400}
+              height={300}
+              className="w-full h-24 lg:h-28 object-cover group-hover/img:scale-105 transition-transform duration-300" 
+            />
           </div>
         )}
       </div>
 
-      {/* --- COLUMN 2: ITEM DETAILS --- */}
       <div className="lg:w-[35%] p-6 flex flex-col justify-center">
         <div className="flex items-center gap-2 mb-2">
            <h3 className="text-xl font-bold text-[#0F172A]">{itemName}</h3>
@@ -85,7 +92,6 @@ export default function ReturnedRentalRow({
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> RETURNED
           </span>
           
-          {/* THE CHAT BUTTON */}
           <button 
             onClick={() => setChatOpen(true)}
             className="bg-white border border-[#E2E8F0] text-[#0F172A] text-[10px] font-bold px-2.5 py-1 rounded-full hover:bg-[#F8FAFC] transition-colors flex items-center gap-1"
@@ -98,7 +104,6 @@ export default function ReturnedRentalRow({
         </div>
       </div>
 
-      {/* --- COLUMN 3: FINANCIALS & ACTION --- */}
       <div className="lg:w-[35%] p-6 flex flex-col justify-center items-end bg-[#F8FAFC]/50 border-t lg:border-t-0 lg:border-l border-[#E2E8F0]">
         {!claim && !showForm && (
           <>

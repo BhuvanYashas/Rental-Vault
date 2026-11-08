@@ -1,0 +1,44 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+export async function addFundsToWallet(amount: number): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  if (amount <= 0) return { error: 'Amount must be greater than 0' }
+
+  // 1. Fetch current balance
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('wallet_balance')
+    .eq('id', user.id)
+    .single()
+
+  if (fetchError) return { error: 'Could not fetch wallet' }
+
+  // 2. Calculate new balance
+  const newBalance = (profile.wallet_balance || 0) + amount
+
+  // 3. Update profile
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ wallet_balance: newBalance })
+    .eq('id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  // 4. Log the transaction
+  await supabase.from('wallet_transactions').insert({
+    user_id: user.id,
+    amount: amount,
+    type: 'DEPOSIT',
+    description: 'Added funds via Credit Card (Mock)'
+  })
+
+  revalidatePath('/profile')
+  return { success: true }
+}

@@ -15,6 +15,7 @@ export async function generateMetadata({
   const { id } = await params
   const supabase = await createClient()
 
+  // Fetch the data needed for SEO (title, description, image)
   const { data } = await supabase
     .from('listings')
     .select(`
@@ -31,8 +32,6 @@ export async function generateMetadata({
   const item = data.items as any
   const title = `${item.name} — ₹${data.rate_per_day}/day | Rental Vault`
   const description = `Rent a ${item.name} (${item.category}) on Rental Vault. Verified, insured, and escrowed.`
-  
-  // Use the first photo from the item, or a generic fallback image
   const imageUrl = item.photos?.[0] || 'https://your-project.supabase.co/storage/v1/object/public/item-photos/default-og.jpg'
 
   return {
@@ -62,6 +61,7 @@ export default async function ListingDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
+  // 1. Fetch the listing details
   const { data, error } = await supabase
     .from('listings')
     .select(`
@@ -71,6 +71,14 @@ export default async function ListingDetailPage({
     .eq('id', id)
 
   if (error || !data || data.length === 0) notFound()
+
+  // 2. Fetch the user's wallet balance
+  const { data: { user } } = await supabase.auth.getUser()
+  let walletBalance = 0
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('wallet_balance').eq('id', user.id).single()
+    walletBalance = profile?.wallet_balance || 0
+  }
 
   const listing = data[0]
   const item = listing.items as unknown as { 
@@ -158,9 +166,15 @@ export default async function ListingDetailPage({
               <p className="text-xl font-bold text-[#0F172A]">₹{listing.deposit}</p>
             </div>
 
-            {item.state === 'IN_VAULT' ? (
+                       {item.state === 'IN_VAULT' ? (
               <div className="space-y-4">
-                <RentButton listingId={listing.id} itemId={item.id} deposit={listing.deposit} />
+                <RentButton 
+                  listingId={listing.id} 
+                  itemId={item.id} 
+                  deposit={listing.deposit} 
+                  ratePerDay={listing.rate_per_day} 
+                  walletBalance={walletBalance} 
+                />
                 <p className="text-center text-xs text-[#5C7FA8] font-medium leading-relaxed">
                   By renting, you agree to the vault's inspection terms upon return.
                 </p>

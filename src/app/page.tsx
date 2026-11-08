@@ -15,9 +15,9 @@ export default async function Home({
     .from('listings')
     .select(`
       id, rate_per_day, deposit, active,
-      items!inner ( id, name, category, grade, state )
-    `)
-    .eq('active', true)
+      items!inner ( id, name, category, grade, state, photos ) 
+    `) 
+    // 👆 I ADDED "photos" TO THE SELECT STATEMENT HERE
 
   if (category && category !== 'All') {
     query = query.eq('items.category', category)
@@ -51,10 +51,7 @@ export default async function Home({
         </p>
       </header>
 
-      {/* Modern Search & Filter Bar */}
       <div className="max-w-4xl mx-auto mb-12 space-y-6">
-        
-        {/* Search Input */}
         <form className="relative flex items-center w-full max-w-xl mx-auto group">
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#5C7FA8] group-focus-within:text-[#0F172A] transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -75,7 +72,6 @@ export default async function Home({
           </div>
         </form>
 
-        {/* Category Pills */}
         <div className="flex flex-wrap justify-center gap-2">
           {categories.map((cat) => {
             const isActive = category === cat || (!category && cat === 'All')
@@ -101,7 +97,6 @@ export default async function Home({
         </div>
       </div>
 
-      {/* Grid */}
       {(!listings || listings.length === 0) ? (
         <div className="text-center py-24 bg-white/50 border border-[#5C7FA8]/20 rounded-3xl">
           <div className="text-6xl mb-4">🔍</div>

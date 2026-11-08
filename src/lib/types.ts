@@ -19,5 +19,6 @@ export type Listing = {
     category: string
     grade: Grade
     state: ItemState
+    photos: string[] | null // 👈 ADDED THIS
   } | null
 }

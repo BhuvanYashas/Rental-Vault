@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DisputeClaimButton from '@/components/DisputeClaimButton'
@@ -119,7 +120,6 @@ function RentalRow({ transaction, claim = null }: { transaction: any, claim?: an
         </div>
       </Link>
 
-      {/* THE CHAT BUTTON FOR RENTERS */}
       <div className="mt-3 flex justify-end">
         <ChatButton transactionId={transaction.id} itemName={item.name} />
       </div>
@@ -129,15 +129,25 @@ function RentalRow({ transaction, claim = null }: { transaction: any, claim?: an
           {latestIntakePhoto && (
             <div>
               <p className="text-xs font-mono uppercase tracking-widest text-[#0F172A] mb-2 font-bold">Intake</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={latestIntakePhoto} alt={`${item.name} intake`} className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]" />
+              <Image
+                src={latestIntakePhoto}
+                alt={`${item.name} intake`}
+                width={400}
+                height={300}
+                className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]"
+              />
             </div>
           )}
           {latestReturnPhoto && (
             <div>
               <p className="text-xs font-mono uppercase tracking-widest text-[#0F172A] mb-2 font-bold">Return</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={latestReturnPhoto} alt={`${item.name} return`} className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]" />
+              <Image
+                src={latestReturnPhoto}
+                alt={`${item.name} return`}
+                width={400}
+                height={300}
+                className="w-full h-32 object-cover rounded-lg border border-[#5C7FA8]"
+              />
             </div>
           )}
         </div>
