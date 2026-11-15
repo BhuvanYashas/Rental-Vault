@@ -63,7 +63,7 @@ export default async function ListingDetailPage({
     .from('listings')
     .select(`
       id, rate_per_day, deposit, active,
-      items ( id, name, category, grade, state, serial_number, photos, notes, average_rating, review_count )
+      items ( id, owner_id, name, category, grade, state, serial_number, photos, average_rating, review_count )
     `)
     .eq('id', id)
 
@@ -79,24 +79,60 @@ export default async function ListingDetailPage({
   const listing = data[0]
   const item = listing.items as unknown as {
     id: string
+    owner_id: string | null
     name: string
     category: string
     grade: string | null
     state: string | null
     serial_number: string | null
     photos: string[] | null
-    notes: string | null
+    notes?: string | null
     average_rating: number | null
     review_count: number | null
   }
 
+  const isOwner = Boolean(user && item.owner_id && user.id === item.owner_id)
+
+  const [{ data: itemReviews }, { data: custodyEvents }, { data: notesRow }] = await Promise.all([
+    supabase
+      .from('reviews')
+      .select('id, rating, comment, created_at, reviewer_id')
+      .eq('item_id', item.id)
+      .order('created_at', { ascending: false })
+      .limit(6),
+    supabase
+      .from('custody_events')
+      .select('id, state, notes, created_at')
+      .eq('item_id', item.id)
+      .order('created_at', { ascending: false })
+      .limit(8),
+    supabase
+      .from('items')
+      .select('notes')
+      .eq('id', item.id)
+      .maybeSingle(),
+  ])
+
+  const ownerNotes = (notesRow as { notes?: string | null } | null)?.notes ?? null
+  item.notes = ownerNotes
+
+  const reviewerIds = Array.from(
+    new Set((itemReviews ?? []).map((r) => r.reviewer_id).filter(Boolean)),
+  )
+  const { data: reviewerProfiles } = reviewerIds.length
+    ? await supabase.from('profiles').select('id, username, full_name').in('id', reviewerIds)
+    : { data: [] }
+  const reviewerMap = new Map(
+    (reviewerProfiles ?? []).map((p) => [p.id, p.username || p.full_name || 'Verified Renter']),
+  )
+
   const mainPhoto = item.photos?.[0]
 
   return (
-    <main className="max-w-6xl mx-auto px-6 md:px-10 py-8 md:py-10">
+    <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-10 space-y-8">
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-sm text-[#0F172A] hover:text-white font-bold mb-6 transition-colors group"
+        className="inline-flex items-center gap-2 text-sm text-[#0F172A] hover:text-white font-bold transition-colors group"
       >
         <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -114,6 +150,7 @@ export default async function ListingDetailPage({
                   alt={item.name}
                   fill
                   priority
+                  referrerPolicy="no-referrer"
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 66vw"
                 />
@@ -229,6 +266,19 @@ export default async function ListingDetailPage({
                   Sign in to Rent
                 </Link>
               </div>
+            ) : isOwner ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-center space-y-3">
+                <p className="text-xs font-mono uppercase tracking-wider text-slate-600 font-bold">Your Vault Listing</p>
+                <p className="text-sm text-slate-700 font-medium">
+                  You listed this item in the vault. Manage its status and completed returns from your dashboard.
+                </p>
+                <Link
+                  href="/owner/dashboard"
+                  className="block w-full vault-btn-navy-3d text-white rounded-xl py-3 font-bold text-sm"
+                >
+                  Go to Owner Dashboard →
+                </Link>
+              </div>
             ) : item.state === 'IN_VAULT' ? (
               <div className="space-y-4">
                 <RentButton
@@ -259,6 +309,87 @@ export default async function ListingDetailPage({
           </div>
         </div>
       </div>
+
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-7">
+        <div className="vault-card-3d rounded-3xl p-6 md:p-7">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-extrabold text-[#0F172A]">Verified Renter Reviews</h2>
+            {(item.review_count ?? 0) > 0 && (
+              <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md tabular-nums">
+                {item.average_rating} ★ · {item.review_count} total
+              </span>
+            )}
+          </div>
+
+          {!itemReviews || itemReviews.length === 0 ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center">
+              <p className="text-sm font-bold text-slate-700">No verified reviews yet</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Reviews unlock automatically after a renter completes and returns this item.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {itemReviews.map((rev) => (
+                <div key={rev.id} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex items-center justify-between gap-3 mb-1.5">
+                    <span className="text-sm font-bold text-[#0F172A]">
+                      {rev.reviewer_id ? reviewerMap.get(rev.reviewer_id) || 'Verified Renter' : 'Verified Renter'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-amber-600 tabular-nums">
+                        {'★'.repeat(rev.rating)}{'☆'.repeat(Math.max(0, 5 - rev.rating))}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400 tabular-nums">
+                        {new Date(rev.created_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                      </span>
+                    </div>
+                  </div>
+                  {rev.comment && (
+                    <p className="text-sm text-slate-600 leading-relaxed">{rev.comment}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="vault-card-3d rounded-3xl p-6 md:p-7">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-extrabold text-[#0F172A]">Vault Custody Provenance</h2>
+            <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md tabular-nums">
+              {custodyEvents?.length ?? 0} event{(custodyEvents?.length ?? 0) === 1 ? '' : 's'}
+            </span>
+          </div>
+
+          {!custodyEvents || custodyEvents.length === 0 ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center">
+              <p className="text-sm font-bold text-slate-700">No custody events logged yet</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Every vault check-in, rental dispatch, and return inspection appears here.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {custodyEvents.map((evt) => (
+                <div key={evt.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
+                  <div>
+                    <span className="inline-block font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
+                      {evt.state}
+                    </span>
+                    <p className="text-xs text-slate-600 font-medium mt-1.5 leading-relaxed">
+                      {evt.notes || 'Custody state updated'}
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-500 shrink-0 tabular-nums">
+                    {new Date(evt.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
     </main>
   )
 }

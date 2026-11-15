@@ -44,7 +44,7 @@ export async function addFundsToWallet(amount: number): Promise<{ error?: string
     user_id: user.id,
     amount: amount,
     type: 'DEPOSIT',
-    description: 'Added funds via Credit Card (Mock)'
+    description: 'Wallet deposit via card'
   })
 
   revalidatePath('/profile')

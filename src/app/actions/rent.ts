@@ -36,14 +36,17 @@ export async function rentItem(
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('rate_per_day, deposit, active, items ( name, state )')
+    .select('rate_per_day, deposit, active, items ( name, state, owner_id )')
     .eq('id', listingId)
     .single()
 
   if (!listing) return { error: 'Listing not found' }
   if (!listing.active) return { error: 'This listing is not active yet.' }
 
-  const itemData = listing.items as unknown as { name?: string; state?: string } | null
+  const itemData = listing.items as unknown as { name?: string; state?: string; owner_id?: string } | null
+  if (itemData?.owner_id && itemData.owner_id === user.id) {
+    return { error: 'You cannot rent your own listed item.' }
+  }
   const itemName = itemData?.name || 'Item'
   const ratePerDay = listing.rate_per_day
   const deposit = listing.deposit
@@ -141,6 +144,8 @@ export async function rentItem(
 
   revalidatePath('/')
   revalidatePath('/my-rentals')
+  revalidatePath('/owner/dashboard')
+  revalidatePath('/operator')
   revalidatePath('/profile')
   revalidatePath(`/listing/${listingId}`)
 

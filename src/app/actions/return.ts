@@ -54,18 +54,21 @@ export async function returnItem(
     return { error: 'You cannot process a return for your own rental. Ask another operator.' }
   }
 
-  // 4. Calculate Late Fee (1.5x daily rate per day late)
+  // 4. Calculate Late Fee (1.5x daily rate per day late) using local YYYY-MM-DD dates
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const endDate = new Date(txn.end_date)
+  const endParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(txn.end_date))
+  const endDate = endParts
+    ? new Date(Number(endParts[1]), Number(endParts[2]) - 1, Number(endParts[3]))
+    : new Date(txn.end_date)
   endDate.setHours(0, 0, 0, 0)
 
   let lateFee = 0
   let lateDays = 0
 
   if (today > endDate) {
-    const diffTime = Math.abs(today.getTime() - endDate.getTime())
-    lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const diffTime = today.getTime() - endDate.getTime()
+    lateDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
     lateFee = Math.round(lateDays * (ratePerDay * 1.5))
   }
 
@@ -137,8 +140,9 @@ export async function returnItem(
 
   revalidatePath('/')
   revalidatePath('/my-rentals')
+  revalidatePath('/owner/dashboard')
   revalidatePath('/operator')
-  revalidatePath('/profile') // So wallet balances update visually
+  revalidatePath('/profile')
   revalidatePath(`/listing/${listingId}`)
 
   return { lateFee }

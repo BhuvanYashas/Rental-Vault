@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import RentalRow, { type RentalRowTransaction } from '@/components/RentalRow'
+import TiltCard from '@/components/TiltCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,7 @@ export default async function MyRentalsPage() {
 
   if (error) {
     return (
-      <main className="max-w-3xl mx-auto px-6 py-8">
+      <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8">
         <p className="text-red-700 bg-red-50 border border-red-200 rounded-xl p-4 font-mono text-sm font-semibold">
           {error.message}
         </p>
@@ -54,24 +55,61 @@ export default async function MyRentalsPage() {
 
   const active = rows.filter((t) => t.status === 'ACTIVE')
   const past = rows.filter((t) => t.status !== 'ACTIVE')
+  const activeEscrowHeld = active.reduce((sum, t) => sum + (Number(t.escrow_amount) || 0), 0)
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-8 md:py-10">
+    <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-10">
       <Link href="/" className="text-sm text-[#0F172A] hover:text-white mb-6 inline-block font-bold transition-colors">
         ← Back to listings
       </Link>
 
-      <header className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#0F172A]">My Rentals</h1>
-        <p className="text-[#0F172A]/85 mt-1 font-semibold tabular-nums">{active.length} active · {past.length} past</p>
+      <header className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#0F172A]">My Rentals</h1>
+          <p className="text-[#0F172A]/85 mt-1 font-semibold tabular-nums">
+            {active.length} active · {past.length} completed
+          </p>
+        </div>
+        <Link
+          href="/"
+          className="vault-btn-navy-3d text-white px-5 py-2.5 rounded-xl text-sm font-bold inline-flex items-center justify-center shrink-0"
+        >
+          Browse Vault Gear →
+        </Link>
       </header>
+
+      {rows.length > 0 && (
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
+          <TiltCard maxTilt={4}>
+            <div className="vault-card-3d rounded-2xl p-5 h-full">
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Active Rentals</p>
+              <p className="text-3xl font-black text-[#0F172A] tabular-nums">{active.length}</p>
+            </div>
+          </TiltCard>
+          <TiltCard maxTilt={4}>
+            <div className="vault-card-3d rounded-2xl p-5 h-full">
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Completed Rentals</p>
+              <p className="text-3xl font-black text-[#0F172A] tabular-nums">{past.length}</p>
+            </div>
+          </TiltCard>
+          <TiltCard maxTilt={4}>
+            <div className="vault-card-3d rounded-2xl p-5 h-full">
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Active Escrow Held</p>
+              <p className="text-3xl font-black text-[#EA580C] tabular-nums">₹{activeEscrowHeld}</p>
+            </div>
+          </TiltCard>
+        </section>
+      )}
 
       {active.length > 0 && (
         <section className="mb-10">
-          <h2 className="inline-block text-xs font-mono uppercase tracking-wider bg-[#EA580C] text-white px-3 py-1 rounded-full mb-4 font-bold shadow-sm">
-            Active
-          </h2>
-          <div className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-extrabold text-[#0F172A]">Active Custody</h2>
+            <span className="text-xs font-mono uppercase tracking-wider bg-[#EA580C] text-white px-3 py-1 rounded-md font-bold shadow-sm tabular-nums">
+              {active.length} Out Now
+            </span>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
             {active.map((t) => (
               <RentalRow key={t.id} transaction={t} claim={claimByTxn.get(t.id)} />
             ))}
@@ -81,10 +119,13 @@ export default async function MyRentalsPage() {
 
       {past.length > 0 && (
         <section>
-          <h2 className="inline-block text-xs font-mono uppercase tracking-wider bg-[#0F172A] text-white px-3 py-1 rounded-full mb-4 font-bold shadow-sm">
-            Past
-          </h2>
-          <div className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-extrabold text-[#0F172A]">Completed History</h2>
+            <span className="text-xs font-mono uppercase tracking-wider bg-[#0F172A] text-white px-3 py-1 rounded-md font-bold shadow-sm tabular-nums">
+              {past.length} Returned
+            </span>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
             {past.map((t) => (
               <RentalRow
                 key={t.id}

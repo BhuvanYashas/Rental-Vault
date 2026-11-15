@@ -6,6 +6,7 @@ import NotificationBell from './NotificationBell'
 export default async function Header() {
   let user: { id: string; email?: string } | null = null
   let role: string | null = null
+  let kycStatus: string | null = null
   let username = ''
 
   if (hasSupabaseEnv()) {
@@ -17,10 +18,11 @@ export default async function Header() {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, username, full_name')
+          .select('role, username, full_name, kyc_status')
           .eq('id', user.id)
           .single()
         role = profile?.role ?? null
+        kycStatus = profile?.kyc_status ?? null
         username = profile?.username || profile?.full_name || user.email?.split('@')[0] || 'User'
       }
     } catch {
@@ -30,7 +32,7 @@ export default async function Header() {
 
   return (
     <header className="border-b border-slate-800/90 bg-[#0F172A]/95 backdrop-blur-md shadow-[0_6px_24px_-6px_rgba(15,23,42,0.55)] sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between gap-8">
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between gap-8">
         <Link
           href="/"
           className="flex items-center gap-2.5 font-extrabold tracking-tight text-white text-lg md:text-xl hover:text-amber-300 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C] rounded-md px-1"
@@ -82,7 +84,7 @@ export default async function Header() {
               </Link>
               <div className="flex items-center gap-3 pl-3 border-l border-slate-700/80">
                 <NotificationBell />
-                <UserNav email={user.email ?? ''} username={username} role={role} />
+                <UserNav email={user.email ?? ''} username={username} role={role} kycStatus={kycStatus} />
               </div>
             </>
           ) : (

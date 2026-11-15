@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ReturnedRentalRow from '@/components/ReturnedRentalRow'
+import TiltCard from '@/components/TiltCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +17,7 @@ export default async function OwnerDashboard() {
     .from('listings')
     .select(`
       id, rate_per_day, deposit, active,
-      items!inner ( id, name, category, state, grade, owner_id )
+      items!inner ( id, name, category, state, grade, owner_id, photos, average_rating, review_count )
     `)
     .eq('items.owner_id', user.id)
     .order('created_at', { ascending: false })
@@ -38,7 +40,7 @@ export default async function OwnerDashboard() {
 
   if (error) {
     return (
-      <main className="max-w-6xl mx-auto px-6 md:px-10 py-10">
+      <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-10">
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-800 font-medium">
           Could not load your owner dashboard: {error.message}
         </div>
@@ -76,8 +78,30 @@ export default async function OwnerDashboard() {
 
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]))
 
+  const typedOwnedListings = (ownedListings ?? []) as unknown as Array<{
+    id: string
+    rate_per_day: number
+    deposit: number
+    active: boolean
+    items: {
+      id: string
+      name: string
+      category: string
+      state: string | null
+      grade: string | null
+      photos: string[] | null
+      average_rating: number | null
+      review_count: number | null
+    }
+  }>
+
+  const totalListed = typedOwnedListings.length
+  const liveInVaultCount = typedOwnedListings.filter((l) => l.active && l.items.state === 'IN_VAULT').length
+  const currentlyRentedCount = typedOwnedListings.filter((l) => l.active && l.items.state === 'RENTED').length
+  const returnedEscrowTotal = (returnedRentals ?? []).reduce((sum, r) => sum + (Number(r.escrow_amount) || 0), 0)
+
   return (
-    <main className="max-w-6xl mx-auto px-6 md:px-10 py-8 md:py-10 space-y-10">
+    <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-10 space-y-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#0F172A]">My Vault Items</h1>
@@ -93,9 +117,36 @@ export default async function OwnerDashboard() {
         </Link>
       </div>
 
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+        <TiltCard maxTilt={4}>
+          <div className="vault-card-3d rounded-2xl p-5 h-full">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Listed Items</p>
+            <p className="text-3xl font-black text-[#0F172A] tabular-nums">{totalListed}</p>
+          </div>
+        </TiltCard>
+        <TiltCard maxTilt={4}>
+          <div className="vault-card-3d rounded-2xl p-5 h-full">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Live in Vault</p>
+            <p className="text-3xl font-black text-emerald-700 tabular-nums">{liveInVaultCount}</p>
+          </div>
+        </TiltCard>
+        <TiltCard maxTilt={4}>
+          <div className="vault-card-3d rounded-2xl p-5 h-full">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Currently Rented</p>
+            <p className="text-3xl font-black text-[#EA580C] tabular-nums">{currentlyRentedCount}</p>
+          </div>
+        </TiltCard>
+        <TiltCard maxTilt={4}>
+          <div className="vault-card-3d rounded-2xl p-5 h-full">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Returned Escrow</p>
+            <p className="text-3xl font-black text-[#0F172A] tabular-nums">₹{returnedEscrowTotal}</p>
+          </div>
+        </TiltCard>
+      </section>
+
       <section>
         <h2 className="text-lg font-extrabold text-[#0F172A] mb-4">Your Listed Inventory</h2>
-        {!ownedListings || ownedListings.length === 0 ? (
+        {typedOwnedListings.length === 0 ? (
           <div className="vault-card-3d rounded-3xl p-10 text-center">
             <p className="text-[#0F172A] font-bold text-lg">No items listed yet</p>
             <p className="text-slate-600 text-sm font-medium mt-1 mb-5">
@@ -109,15 +160,10 @@ export default async function OwnerDashboard() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(ownedListings as unknown as Array<{
-              id: string
-              rate_per_day: number
-              deposit: number
-              active: boolean
-              items: { id: string; name: string; category: string; state: string | null }
-            }>).map((listing) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {typedOwnedListings.map((listing) => {
               const item = listing.items
+              const photo = item.photos?.[0]
               const statusLabel = !listing.active
                 ? 'Pending Approval'
                 : item.state === 'RENTED'
@@ -132,27 +178,55 @@ export default async function OwnerDashboard() {
                 : 'bg-emerald-50 text-emerald-800 border-emerald-200'
 
               return (
-                <Link
-                  key={listing.id}
-                  href={`/listing/${listing.id}`}
-                  className="vault-card-3d rounded-2xl p-5 hover:-translate-y-1 transition-all flex flex-col justify-between gap-4"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        {item.category}
+                <TiltCard key={listing.id} maxTilt={5}>
+                  <Link
+                    href={`/listing/${listing.id}`}
+                    className="vault-title-card-3d rounded-2xl overflow-hidden flex flex-col justify-between h-full group"
+                  >
+                    <div className="vault-title-header-3d px-4 py-3 flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider truncate">
+                        {item.category} · Grade {item.grade ?? 'A'}
                       </span>
-                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md border ${statusClass}`}>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded border shrink-0 ${statusClass}`}>
                         {statusLabel}
                       </span>
                     </div>
-                    <h3 className="font-bold text-[#0F172A] text-lg leading-snug">{item.name}</h3>
-                  </div>
-                  <div className="flex items-baseline justify-between pt-3 border-t border-slate-100 text-sm tabular-nums">
-                    <span className="font-bold text-[#0F172A]">₹{listing.rate_per_day}/day</span>
-                    <span className="text-slate-600 font-medium">Deposit ₹{listing.deposit}</span>
-                  </div>
-                </Link>
+
+                    <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden">
+                      {photo ? (
+                        <Image
+                          src={photo}
+                          alt={item.name}
+                          fill
+                          referrerPolicy="no-referrer"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
+                          <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 flex flex-col justify-between gap-3 flex-1 bg-white">
+                      <div>
+                        <h3 className="font-extrabold text-[#0F172A] text-base leading-snug line-clamp-1">{item.name}</h3>
+                        {(item.review_count ?? 0) > 0 && (
+                          <p className="text-xs font-bold text-amber-600 mt-1 tabular-nums">
+                            ★ {item.average_rating} ({item.review_count})
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-baseline justify-between pt-3 border-t border-slate-100 text-sm tabular-nums">
+                        <span className="font-black text-[#0F172A]">₹{listing.rate_per_day}<span className="text-xs font-medium text-slate-500">/day</span></span>
+                        <span className="text-xs text-slate-600 font-semibold">Deposit ₹{listing.deposit}</span>
+                      </div>
+                    </div>
+                  </Link>
+                </TiltCard>
               )
             })}
           </div>

@@ -102,10 +102,35 @@ export default function RentButton({
     })
   }
 
+  const applyPreset = (days: number) => {
+    const base = startDate ? parseLocalDate(startDate) : new Date()
+    const target = new Date(base)
+    target.setDate(target.getDate() + days)
+    setEndDate(getLocalDateString(target))
+  }
+
   return (
     <div className="space-y-4">
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-        <p className="text-xs font-mono uppercase tracking-wider text-slate-700 font-bold">Select Rental Dates</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-700 font-bold">Select Rental Dates</p>
+          <div className="flex items-center gap-1">
+            {[1, 3, 7, 14].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => applyPreset(d)}
+                className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors ${
+                  rentalDays === d
+                    ? 'bg-[#0F172A] text-white'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400'
+                }`}
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Start Date</label>

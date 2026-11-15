@@ -101,7 +101,7 @@ export default async function OperatorPage() {
   const openClaims = claims?.filter((c) => c.status === 'OPEN' || c.status === 'DISPUTED' || c.status === 'ESCALATED').length ?? 0
 
   return (
-    <main className="max-w-6xl mx-auto px-6 md:px-10 py-8 md:py-10 space-y-10">
+    <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-10 space-y-10">
       <header>
         <p className="inline-block text-xs font-mono uppercase tracking-[0.18em] bg-[#EA580C] text-white px-3 py-1 rounded-full font-bold mb-3 shadow-sm">
           Operator View

@@ -66,7 +66,7 @@ export default async function PlatformPage() {
   const claims = escalated as unknown as EscalatedClaim[] | null
 
   return (
-    <main className="max-w-5xl mx-auto px-6 md:px-10 py-8 md:py-10 space-y-8">
+    <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-10 space-y-8">
       <header>
         <p className="inline-block text-xs font-mono uppercase tracking-[0.18em] bg-[#0F172A] text-white px-3 py-1 rounded-full mb-3 font-bold shadow-sm">
           Platform Mediation

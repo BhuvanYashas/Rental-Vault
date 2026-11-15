@@ -28,21 +28,35 @@ export async function createListing(
     return { error: 'Item name is too long (max 100 characters)' }
   }
 
-  // 2. Create the Item
-  const { data: item, error: itemError } = await supabase
+  // 2. Create the Item (fallback cleanly if live schema omits items.notes column)
+  const baseItemPayload = {
+    owner_id: user.id,
+    name: name.trim(),
+    category: category.trim(),
+    serial_number: serialNumber.trim() || null,
+    grade: 'A',
+    state: 'IN_VAULT',
+    photos: photoUrl ? [photoUrl] : [],
+  }
+
+  let { data: item, error: itemError } = await supabase
     .from('items')
     .insert({
-      owner_id: user.id,
-      name: name.trim(),
-      category: category.trim(),
-      serial_number: serialNumber.trim() || null,
-      grade: 'A', 
-      state: 'IN_VAULT',
-      photos: photoUrl ? [photoUrl] : [],
-      notes: notes.trim() || null, // 👈 SAVING THE NOTES NOW
+      ...baseItemPayload,
+      notes: notes.trim() || null,
     })
     .select('id')
     .single()
+
+  if (itemError && itemError.message.toLowerCase().includes('notes')) {
+    const fallback = await supabase
+      .from('items')
+      .insert(baseItemPayload)
+      .select('id')
+      .single()
+    item = fallback.data
+    itemError = fallback.error
+  }
 
   if (itemError || !item) {
     return { error: itemError?.message || 'Failed to create item' }

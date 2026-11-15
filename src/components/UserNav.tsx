@@ -9,10 +9,12 @@ export default function UserNav({
   email,
   username,
   role,
+  kycStatus,
 }: {
   email: string
   username: string
   role: string | null
+  kycStatus?: string | null
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -32,11 +34,14 @@ export default function UserNav({
   async function handleSignOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
+    setIsOpen(false)
     router.push('/')
     router.refresh()
   }
 
   const initial = username ? username.charAt(0).toUpperCase() : email.charAt(0).toUpperCase()
+  const isKycVerified = kycStatus === 'verified'
+  const isKycPending = kycStatus === 'pending'
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -45,7 +50,7 @@ export default function UserNav({
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 focus:outline-none group"
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D97706] to-[#B45309] flex items-center justify-center text-white font-bold shadow-sm border border-white/20 group-hover:scale-105 transition-transform">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#F97316] to-[#EA580C] flex items-center justify-center text-white font-extrabold shadow-[0_3px_0_0_#9A3412,inset_0_1px_0_rgba(255,255,255,0.35)] border border-white/25 group-hover:-translate-y-0.5 transition-transform">
           {initial}
         </div>
         <svg
@@ -60,12 +65,32 @@ export default function UserNav({
 
       {/* The Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-64 bg-[#1E293B] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-3 w-64 vault-card-3d-dark rounded-2xl py-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           
           {/* User Info Header */}
-          <div className="px-5 py-4 border-b border-white/10 mb-2">
-            <p className="text-sm font-bold text-white truncate">{username || 'User'}</p>
-            <p className="text-xs text-slate-400 truncate">{email}</p>
+          <div className="px-5 py-4 border-b border-white/10 mb-2 space-y-2">
+            <div>
+              <p className="text-sm font-bold text-white truncate">{username || 'User'}</p>
+              <p className="text-xs text-slate-400 truncate">{email}</p>
+            </div>
+            <Link
+              href="/profile"
+              onClick={() => setIsOpen(false)}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold transition-colors ${
+                isKycVerified
+                  ? 'text-emerald-400 hover:text-emerald-300'
+                  : isKycPending
+                  ? 'text-amber-400 hover:text-amber-300'
+                  : 'text-[#FB923C] hover:text-white'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>
+                {isKycVerified ? 'KYC Verified' : isKycPending ? 'KYC Pending Review' : 'Verify KYC'}
+              </span>
+            </Link>
           </div>
 
           {/* Links */}

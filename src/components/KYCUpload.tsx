@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+import TiltCard from './TiltCard'
+
 export default function KYCUpload({ currentStatus }: { currentStatus: string }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,43 +53,85 @@ export default function KYCUpload({ currentStatus }: { currentStatus: string }) 
 
   if (currentStatus === 'verified') {
     return (
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-        <p className="text-emerald-800 font-bold flex items-center justify-center gap-2 text-sm">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Identity Verified
-        </p>
-        <p className="text-emerald-700 text-xs mt-1 font-medium">You have full access to the vault.</p>
-      </div>
+      <TiltCard maxTilt={4}>
+        <div className="vault-card-3d rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-br from-white via-[#F4FAF7] to-[#E6F7EE]">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-[0_4px_0_0_#065F46,0_10px_20px_-6px_rgba(5,150,105,0.45),inset_0_1px_0_rgba(255,255,255,0.35)]">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.3" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wider text-emerald-700 font-bold">Trust Status</p>
+              <h2 className="text-lg font-extrabold text-[#0F172A]">KYC Verified</h2>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                Identity verified. You have full access to rent and list items in the vault.
+              </p>
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 shadow-[0_3px_0_0_#065F46,inset_0_1px_0_rgba(255,255,255,0.3)] self-start sm:self-center">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.4" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Verified Member</span>
+          </div>
+        </div>
+      </TiltCard>
     )
   }
 
   if (currentStatus === 'pending') {
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-        <p className="text-amber-800 font-bold flex items-center justify-center gap-2 text-sm">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Verification Pending
-        </p>
-        <p className="text-amber-700 text-xs mt-1 font-medium">An operator is reviewing your ID.</p>
-      </div>
+      <TiltCard maxTilt={4}>
+        <div className="vault-card-3d rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-br from-white via-[#FFFBEB] to-[#FEF3C7]">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-[0_4px_0_0_#B45309,0_10px_20px_-6px_rgba(217,119,6,0.45),inset_0_1px_0_rgba(255,255,255,0.4)]">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wider text-amber-700 font-bold">Trust Status</p>
+              <h2 className="text-lg font-extrabold text-[#0F172A]">KYC Verification Pending</h2>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                An operator is reviewing your submitted ID document.
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex items-center bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 shadow-[0_3px_0_0_#B45309] self-start sm:self-center">
+            Under Review
+          </span>
+        </div>
+      </TiltCard>
     )
   }
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-center">
-      <p className="text-slate-900 font-bold text-sm mb-1">Verify your identity</p>
-      <p className="text-xs text-slate-600 mb-4 leading-relaxed">Upload your Aadhar, PAN, or College ID to unlock rentals.</p>
+    <TiltCard maxTilt={4}>
+      <div className="vault-card-3d rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#1E293B] to-[#0F172A] text-[#F97316] flex items-center justify-center shrink-0 shadow-[0_4px_0_0_#020617,inset_0_1px_0_rgba(255,255,255,0.2)]">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-mono uppercase tracking-wider text-[#B45309] font-bold">Trust Status</p>
+            <h2 className="text-lg font-extrabold text-[#0F172A]">Verify Your Identity (KYC)</h2>
+            <p className="text-xs text-slate-600 font-medium mt-0.5">
+              Upload your Aadhar, PAN, or College ID to unlock rentals.
+            </p>
+            {error && <p className="text-red-700 text-xs mt-1.5 font-semibold">{error}</p>}
+          </div>
+        </div>
 
-      <label className="cursor-pointer bg-[#0F172A] text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors inline-block">
-        {uploading ? 'Uploading...' : 'Select ID Image'}
-        <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
-      </label>
-
-      {error && <p className="text-red-700 text-xs mt-3 font-semibold">{error}</p>}
-    </div>
+        <label className="cursor-pointer vault-btn-amber-3d text-white px-5 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 self-start sm:self-center">
+          {uploading ? 'Uploading...' : 'Select ID Image'}
+          <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
+        </label>
+      </div>
+    </TiltCard>
   )
 }

@@ -80,7 +80,7 @@ export default function NewItemPage() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-6 py-8 md:py-10">
+    <main className="max-w-4xl mx-auto px-5 sm:px-8 py-8 md:py-10">
       <Link
         href="/"
         className="text-sm text-[#0F172A] hover:text-white font-bold mb-6 inline-block transition-colors"
