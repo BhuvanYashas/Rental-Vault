@@ -8,8 +8,107 @@
 
 body {
   background-color: var(--background);
-  /* 👇 This adds a subtle dot grid texture to the whole app */
-  background-image: radial-gradient(rgba(15, 23, 42, 0.08) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image:
+    radial-gradient(ellipse 85% 45% at 50% 0%, rgba(255, 255, 255, 0.24), transparent 70%),
+    radial-gradient(rgba(15, 23, 42, 0.11) 1px, transparent 1px),
+    linear-gradient(180deg, #86AED9 0%, #7BA3D0 42%, #6892C2 100%);
+  background-size: 100% 600px, 24px 24px, 100% 100%;
+  background-repeat: no-repeat, repeat, no-repeat;
   color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Tactile 3D elevation & physical button depth */
+.vault-card-3d {
+  background-color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-bottom: 3px solid #cbd5e1;
+  box-shadow:
+    0 16px 32px -12px rgba(15, 23, 42, 0.28),
+    0 4px 10px -2px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.vault-card-3d-dark {
+  background: linear-gradient(145deg, #162238 0%, #0F172A 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 3px solid #020617;
+  box-shadow:
+    0 18px 34px -10px rgba(15, 23, 42, 0.45),
+    0 6px 12px -4px rgba(15, 23, 42, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.vault-btn-amber-3d {
+  background: linear-gradient(180deg, #F97316 0%, #EA580C 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 4px 0 0 #9A3412,
+    0 10px 20px -6px rgba(15, 23, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 140ms cubic-bezier(0.22, 1, 0.36, 1), filter 140ms ease;
+}
+
+.vault-btn-amber-3d:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 0 0 #9A3412,
+    0 14px 24px -6px rgba(15, 23, 42, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.vault-btn-amber-3d:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 0 #9A3412,
+    0 4px 10px -4px rgba(15, 23, 42, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.vault-btn-navy-3d {
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 0 0 #020617,
+    0 10px 20px -6px rgba(15, 23, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 140ms cubic-bezier(0.22, 1, 0.36, 1), background-color 140ms ease;
+}
+
+.vault-btn-navy-3d:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 0 0 #020617,
+    0 14px 24px -6px rgba(15, 23, 42, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.vault-btn-navy-3d:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 0 #020617,
+    0 4px 10px -4px rgba(15, 23, 42, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.vault-inset-3d {
+  box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-btn-amber-3d,
+  .vault-btn-navy-3d {
+    transition: none;
+  }
+  .vault-btn-amber-3d:hover:not(:disabled),
+  .vault-btn-navy-3d:hover:not(:disabled),
+  .vault-btn-amber-3d:active:not(:disabled),
+  .vault-btn-navy-3d:active:not(:disabled) {
+    transform: none;
+  }
 }

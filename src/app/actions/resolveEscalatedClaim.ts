@@ -35,8 +35,12 @@ export async function resolveEscalatedClaim(
   if (!claim) return { error: 'Claim not found' }
   if (claim.status !== 'ESCALATED') return { error: 'Claim is not awaiting platform review' }
 
-  const txn = claim.transactions as any
+  const txn = claim.transactions as unknown as {
+    renter_id: string
+    listings?: { items?: { owner_id: string; name: string } | null } | null
+  } | null
   const item = txn?.listings?.items
+  if (!txn || !item) return { error: 'Associated transaction or item not found' }
 
   // 2. FINANCIAL REVERSAL: If the platform overturns the vault's ruling
   if (resolution === 'RENTER_WINS') {

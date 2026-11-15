@@ -33,8 +33,12 @@ export async function resolveClaim(
     return { error: 'Claim is already resolved or escalated to platform review.' }
   }
 
-  const txn = claim.transactions as any
+  const txn = claim.transactions as unknown as {
+    renter_id: string
+    listings?: { items?: { owner_id: string; name: string } | null } | null
+  } | null
   const item = txn?.listings?.items
+  if (!txn || !item) return { error: 'Associated transaction or item not found' }
 
   // Conflict of Interest Checks
   if (txn?.renter_id === user.id) return { error: 'You cannot resolve a claim on a rental you made.' }

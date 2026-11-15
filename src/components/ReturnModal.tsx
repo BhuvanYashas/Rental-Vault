@@ -105,7 +105,7 @@ export default function ReturnModal({
                 <p className="text-sm font-bold text-red-800">Late Return Detected</p>
               </div>
               <p className="text-sm text-red-700 font-medium">
-                This item is <strong>{lateDays} day(s)</strong> late. A late fee of <strong>₹{lateFee}</strong> will be deducted from the renter's escrow.
+                This item is <strong>{lateDays} day(s)</strong> late. A late fee of <strong>₹{lateFee}</strong> will be deducted from the renter&apos;s escrow.
               </p>
             </div>
           )}

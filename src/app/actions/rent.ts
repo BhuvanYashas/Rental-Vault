@@ -3,10 +3,27 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+function parseIsoDateLocal(dateStr: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(year, month - 1, day)
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null
+  }
+  return date
+}
+
 export async function rentItem(
   listingId: string,
   itemId: string,
-  deposit: number,
+  _clientDeposit: number,
   startDate: string,
   endDate: string,
   photoUrl: string | null,
@@ -17,37 +34,41 @@ export async function rentItem(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'You must be signed in to rent' }
 
-  // 1. Fetch listing to get the daily rate
   const { data: listing } = await supabase
     .from('listings')
-    .select('rate_per_day, items ( name )')
+    .select('rate_per_day, deposit, active, items ( name, state )')
     .eq('id', listingId)
     .single()
 
   if (!listing) return { error: 'Listing not found' }
+  if (!listing.active) return { error: 'This listing is not active yet.' }
 
-  const itemName = (listing.items as any)?.name || 'Item'
+  const itemData = listing.items as unknown as { name?: string; state?: string } | null
+  const itemName = itemData?.name || 'Item'
   const ratePerDay = listing.rate_per_day
-  
-  // 2. Calculate cost on server & validate dates
-  const start = new Date(startDate)
-  const end = new Date(endDate)
+  const deposit = listing.deposit
+
+  const start = parseIsoDateLocal(startDate)
+  const end = parseIsoDateLocal(endDate)
+  if (!start || !end) {
+    return { error: 'Please provide valid start and end dates.' }
+  }
+
   const today = new Date()
-  today.setHours(0, 0, 0, 0) // Reset time to midnight for accurate comparison
+  today.setHours(0, 0, 0, 0)
 
   if (start < today) {
     return { error: 'Start date cannot be in the past.' }
   }
 
   const diffTime = end.getTime() - start.getTime()
-  const rentalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const rentalDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
 
   if (rentalDays <= 0) return { error: 'End date must be after the start date.' }
 
   const rentalFee = ratePerDay * rentalDays
   const totalUpfrontCost = deposit + rentalFee
 
-  // 3. Fetch user's wallet balance
   const { data: profile } = await supabase
     .from('profiles')
     .select('wallet_balance')
@@ -61,7 +82,6 @@ export async function rentItem(
     return { error: `Insufficient funds. You need ₹${totalUpfrontCost}, but your wallet only has ₹${currentBalance}.` }
   }
 
-  // 4. ATOMIC LOCK: Lock the item
   const { data: updatedItem, error: updateError } = await supabase
     .from('items')
     .update({ state: 'RENTED' })
@@ -74,23 +94,20 @@ export async function rentItem(
     return { error: 'This item was just rented by someone else.' }
   }
 
-  // 5. ATOMIC WALLET DEDUCTION: Only update if balance hasn't changed
   const newBalance = currentBalance - totalUpfrontCost
   const { data: updatedWallet, error: walletError } = await supabase
     .from('profiles')
     .update({ wallet_balance: newBalance })
     .eq('id', user.id)
-    .eq('wallet_balance', currentBalance) // 👈 THE FIX: Ensures no double-spending
+    .eq('wallet_balance', currentBalance)
     .select()
     .single()
 
   if (walletError || !updatedWallet) {
-    // Rollback item state if wallet failed
     await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId)
     return { error: 'Wallet balance changed during transaction. Please try again.' }
   }
 
-  // 6. Create transaction
   const { error: txnError } = await supabase.from('transactions').insert({
     listing_id: listingId,
     renter_id: user.id,
@@ -101,21 +118,18 @@ export async function rentItem(
   })
 
   if (txnError) {
-    // Rollback everything
     await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId)
     await supabase.from('profiles').update({ wallet_balance: currentBalance }).eq('id', user.id).eq('wallet_balance', newBalance)
     return { error: txnError.message }
   }
 
-  // 7. Log wallet deduction
   await supabase.from('wallet_transactions').insert({
     user_id: user.id,
     amount: -totalUpfrontCost,
     type: 'RENTAL_PAYMENT',
-    description: `₹${rentalFee} Rent + ₹${deposit} Deposit for ${itemName}`
+    description: `₹${rentalFee} Rent + ₹${deposit} Deposit for ${itemName}`,
   })
 
-  // 8. Log custody event
   const trimmed = note?.trim()
   await supabase.from('custody_events').insert({
     item_id: itemId,

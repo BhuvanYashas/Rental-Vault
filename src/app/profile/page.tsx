@@ -29,98 +29,101 @@ export default async function ProfilePage() {
   const displayName = profile?.username || profile?.full_name || user.email?.split('@')[0] || 'User'
   const initial = displayName.charAt(0).toUpperCase()
 
-  const roleConfig: Record<string, { label: string, color: string, icon: string }> = {
-    renter: { label: 'Renter', color: 'bg-emerald-100 text-emerald-800', icon: '👤' },
-    operator: { label: 'Vault Operator', color: 'bg-amber-100 text-amber-800', icon: '🛡️' },
-    platform: { label: 'Platform Reviewer', color: 'bg-indigo-100 text-indigo-800', icon: '⚖️' },
+  const roleConfig: Record<string, { label: string; color: string }> = {
+    renter: { label: 'Renter', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+    operator: { label: 'Vault Operator', color: 'bg-amber-50 text-amber-800 border-amber-200' },
+    platform: { label: 'Platform Reviewer', color: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
   }
   const currentRole = roleConfig[profile?.role || 'renter'] || roleConfig.renter
 
   return (
-    <main className="max-w-5xl mx-auto p-8">
-      <Link href="/" className="text-sm text-[#0F172A] hover:text-[#D97706] font-bold mb-8 inline-block transition-colors">
+    <main className="max-w-5xl mx-auto px-6 md:px-10 py-8 md:py-10">
+      <Link href="/" className="text-sm text-[#0F172A] hover:text-white font-bold mb-6 inline-block transition-colors">
         ← Back to home
       </Link>
 
       <header className="mb-8">
-        <h1 className="text-4xl font-extrabold tracking-tight text-[#0F172A]">Your Profile</h1>
-        <p className="text-[#1E293B] mt-2 font-medium text-lg">Manage your account and view recent activity.</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#0F172A]">Your Profile</h1>
+        <p className="text-[#0F172A]/85 mt-1 font-semibold">Manage your account, identity verification, and wallet.</p>
       </header>
 
-      {/* 👇 IMPROVED LAYOUT GRID 👇 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
-        {/* Left Column: Identity & KYC */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl shadow-lg overflow-hidden relative">
-            <div className="bg-[#0F172A] p-6 pb-12 flex flex-col items-center text-center relative z-10">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#D97706] to-[#B45309] flex items-center justify-center text-white text-4xl font-black shadow-inner border-4 border-[#0F172A] mb-4">
+          <div className="vault-card-3d rounded-3xl overflow-hidden">
+            <div className="bg-[#0F172A] p-6 pb-10 flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D97706] to-[#B45309] flex items-center justify-center text-white text-3xl font-black border-4 border-[#0F172A] mb-3">
                 {initial}
               </div>
-              <h2 className="text-2xl font-bold text-white">{displayName}</h2>
-              <p className="text-slate-400 text-sm mt-1">{user.email}</p>
+              <h2 className="text-xl font-bold text-white">{displayName}</h2>
+              <p className="text-slate-300 text-sm mt-0.5">{user.email}</p>
             </div>
-            
-            <div className="p-6 pt-0 relative z-10 -mt-6 space-y-6">
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm text-center">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[#5C7FA8] font-bold mb-2">Account Role</p>
-                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold ${currentRole.color}`}>
-                  <span>{currentRole.icon}</span> {currentRole.label}
+
+            <div className="p-6 pt-0 -mt-5 space-y-5">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm text-center">
+                <p className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-2">
+                  Account Role
+                </p>
+                <span className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-bold border ${currentRole.color}`}>
+                  {currentRole.label}
                 </span>
               </div>
-              
-              <div className="flex justify-center">
-                <ProfileEditForm initialUsername={displayName} initialAge={profile?.age?.toString() || ''} />
-              </div>
 
-              <div className="w-full">
-                <KYCUpload currentStatus={profile?.kyc_status || 'unverified'} />
-              </div>
+              <ProfileEditForm initialUsername={displayName} initialAge={profile?.age?.toString() || ''} />
+
+              <KYCUpload currentStatus={profile?.kyc_status || 'unverified'} />
             </div>
           </div>
         </div>
 
-        {/* Right Column: Wallet, Details, Activity */}
         <div className="lg:col-span-2 space-y-6">
-          
-          {/* 1. Wallet Card (Top) */}
           <WalletCard balance={profile?.wallet_balance || 0} />
 
-          {/* 2. Age & Member Since (Side by side) */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm">
-              <p className="text-xs font-mono uppercase tracking-widest text-[#5C7FA8] font-bold mb-2">Age</p>
-              <p className="text-xl font-bold text-[#0F172A]">{profile?.age ? `${profile.age} years old` : 'Not set'}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="vault-card-3d rounded-2xl p-5">
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Age</p>
+              <p className="text-xl font-bold text-[#0F172A] tabular-nums">
+                {profile?.age ? `${profile.age} years old` : 'Not set'}
+              </p>
             </div>
-            <div className="bg-white border border-[#5C7FA8]/40 rounded-2xl p-5 shadow-sm">
-              <p className="text-xs font-mono uppercase tracking-widest text-[#5C7FA8] font-bold mb-2">Member Since</p>
+            <div className="vault-card-3d rounded-2xl p-5">
+              <p className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">Member Since</p>
               <p className="text-xl font-bold text-[#0F172A]">
-                {new Date(profile?.created_at || user.created_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                {new Date(profile?.created_at || user.created_at).toLocaleDateString('en-IN', {
+                  month: 'short',
+                  year: 'numeric',
+                })}
               </p>
             </div>
           </div>
 
-          {/* 3. Recent Activity */}
-          <div className="bg-white border border-[#5C7FA8]/40 rounded-3xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-[#0F172A] mb-4">Recent Activity</h3>
+          <div className="vault-card-3d rounded-3xl p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Recent Activity</h3>
             {!activity || activity.length === 0 ? (
-              <p className="text-sm text-[#1E293B] font-medium">No recent activity found.</p>
+              <p className="text-sm text-slate-600 font-medium">No recent activity found.</p>
             ) : (
-              <div className="space-y-4">
-                {activity.map((e: any) => (
-                  <div key={e.id} className="flex items-start gap-3 pb-3 border-b border-[#E2E8F0] last:border-0 last:pb-0">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${e.state === 'IN_VAULT' ? 'bg-emerald-500' : 'bg-[#D97706]'}`} />
+              <div className="divide-y divide-slate-100">
+                {(activity as unknown as Array<{
+                  id: string
+                  state: string
+                  notes: string | null
+                  created_at: string
+                  items?: { name?: string } | null
+                }>).map((e) => (
+                  <div key={e.id} className="py-3 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-bold text-[#0F172A]">{e.items?.name || 'Item'} → {e.state}</p>
-                      <p className="text-xs text-[#1E293B] font-medium mt-0.5">{e.notes}</p>
-                      <p className="text-[10px] text-[#5C7FA8] font-mono mt-1">{new Date(e.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                      <p className="text-sm font-bold text-slate-900">
+                        {e.items?.name || 'Item'} · <span className="font-mono text-xs text-slate-600">{e.state}</span>
+                      </p>
+                      <p className="text-xs text-slate-600 font-medium mt-0.5">{e.notes}</p>
                     </div>
+                    <p className="text-xs text-slate-500 font-mono shrink-0">
+                      {new Date(e.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                    </p>
                   </div>
                 ))}
               </div>
             )}
           </div>
-
         </div>
       </div>
     </main>

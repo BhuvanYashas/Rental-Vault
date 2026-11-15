@@ -26,7 +26,7 @@ export async function openClaim(
     .from('transactions')
     .select(`
       id, status, renter_id, escrow_amount,
-      listings ( items ( owner_id, name ) )
+      listings ( id, items ( owner_id, name ) )
     `)
     .eq('id', transactionId)
     .single()
@@ -34,7 +34,11 @@ export async function openClaim(
   if (txnError || !txn) return { error: 'Transaction not found' }
   if (txn.status !== 'RETURNED') return { error: 'Claims can only be opened on returned rentals' }
 
-  const item = (txn.listings as any)?.items
+  const listing = txn.listings as unknown as {
+    id?: string
+    items?: { owner_id?: string; name?: string } | null
+  } | null
+  const item = listing?.items
 
   // Conflict of Interest Checks
   if (txn.renter_id === user.id) return { error: 'You cannot open a claim on your own rental.' }
@@ -79,7 +83,7 @@ export async function openClaim(
 
   revalidatePath('/operator')
   revalidatePath('/my-rentals')
-  revalidatePath(`/listing/${(txn.listings as any).id}`)
+  if (listing?.id) revalidatePath(`/listing/${listing.id}`)
 
   return { claimId: claim.id }
 }

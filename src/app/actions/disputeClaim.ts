@@ -29,7 +29,10 @@ export async function disputeClaim(
     .eq('id', claimId)
     .single()
 
-  const itemName = (claim?.transactions as any)?.listings?.items?.name || 'Item'
+  const txn = claim?.transactions as unknown as {
+    listings?: { items?: { name?: string } | null } | null
+  } | null
+  const itemName = txn?.listings?.items?.name || 'Item'
 
   // 2. Call the secure Postgres RPC
   const { error } = await supabase.rpc('dispute_claim', {

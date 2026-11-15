@@ -18,7 +18,10 @@ export default function KYCUpload({ currentStatus }: { currentStatus: string }) 
     setError(null)
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      setUploading(false)
+      return
+    }
 
     const fileExt = file.name.split('.').pop()
     const filePath = `${user.id}/id-card.${fileExt}`
@@ -49,11 +52,13 @@ export default function KYCUpload({ currentStatus }: { currentStatus: string }) 
   if (currentStatus === 'verified') {
     return (
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-        <p className="text-emerald-800 font-bold flex items-center justify-center gap-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p className="text-emerald-800 font-bold flex items-center justify-center gap-2 text-sm">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           Identity Verified
         </p>
-        <p className="text-emerald-600 text-sm mt-1">You have full access to the vault.</p>
+        <p className="text-emerald-700 text-xs mt-1 font-medium">You have full access to the vault.</p>
       </div>
     )
   }
@@ -61,26 +66,28 @@ export default function KYCUpload({ currentStatus }: { currentStatus: string }) 
   if (currentStatus === 'pending') {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-        <p className="text-amber-800 font-bold flex items-center justify-center gap-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p className="text-amber-800 font-bold flex items-center justify-center gap-2 text-sm">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           Verification Pending
         </p>
-        <p className="text-amber-600 text-sm mt-1">An operator is reviewing your ID.</p>
+        <p className="text-amber-700 text-xs mt-1 font-medium">An operator is reviewing your ID.</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white border-2 border-dashed border-[#5C7FA8]/40 rounded-xl p-6 text-center">
-      <p className="text-[#0F172A] font-bold mb-2">Verify your identity</p>
-      <p className="text-sm text-[#1E293B] mb-4">Upload your Aadhar, PAN, or College ID to unlock rentals.</p>
-      
-      <label className="cursor-pointer bg-[#0F172A] text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-[#1E293B] transition-colors inline-block">
+    <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-center">
+      <p className="text-slate-900 font-bold text-sm mb-1">Verify your identity</p>
+      <p className="text-xs text-slate-600 mb-4 leading-relaxed">Upload your Aadhar, PAN, or College ID to unlock rentals.</p>
+
+      <label className="cursor-pointer bg-[#0F172A] text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors inline-block">
         {uploading ? 'Uploading...' : 'Select ID Image'}
         <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
       </label>
-      
-      {error && <p className="text-red-600 text-sm mt-3 font-medium">{error}</p>}
+
+      {error && <p className="text-red-700 text-xs mt-3 font-semibold">{error}</p>}
     </div>
   )
 }

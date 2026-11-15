@@ -34,7 +34,7 @@ export default function CameraCapture({
 
   async function openCamera() {
     setError(null)
-    setPreview(null) // Reset preview when opening camera
+    setPreview(null)
 
     const attempts: MediaStreamConstraints[] = [
       { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
@@ -43,7 +43,7 @@ export default function CameraCapture({
     ]
 
     let stream: MediaStream | null = null
-    let lastError: any = null
+    let lastError: unknown = null
 
     for (const constraints of attempts) {
       try {
@@ -55,8 +55,9 @@ export default function CameraCapture({
     }
 
     if (!stream) {
+      const errorName = lastError instanceof Error ? lastError.name : ''
       setError(
-        lastError?.name === 'NotAllowedError'
+        errorName === 'NotAllowedError'
           ? 'Camera access denied. Please allow camera in browser settings.'
           : 'Could not access camera. Check your device permissions.',
       )
@@ -70,7 +71,7 @@ export default function CameraCapture({
     }
 
     streamRef.current = stream
-    setIsOpen(true) 
+    setIsOpen(true)
   }
 
   const stopCamera = useCallback(() => {
@@ -154,7 +155,7 @@ export default function CameraCapture({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-mono uppercase tracking-widest text-neutral-600 font-bold">
+      <p className="text-xs font-mono uppercase tracking-wider text-slate-700 font-bold">
         {label}
       </p>
 
@@ -165,22 +166,36 @@ export default function CameraCapture({
           type="button"
           onClick={openCamera}
           disabled={isUploading}
-          className="w-full bg-[#D97706] text-white rounded-xl py-3 font-medium hover:bg-[#B45309] transition-colors disabled:opacity-50"
+          className="w-full bg-[#D97706] text-white rounded-xl py-3 font-bold hover:bg-[#B45309] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
-          {isUploading ? 'Uploading…' : '📷 Open Camera'}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>{isUploading ? 'Uploading…' : 'Open Camera'}</span>
         </button>
       )}
 
       {isOpen && (
         <div className="space-y-3">
-          <div className="rounded-xl overflow-hidden border border-neutral-300 bg-black">
+          <div className="rounded-xl overflow-hidden border border-slate-300 bg-black">
             <video ref={videoRef} autoPlay playsInline muted className="w-full h-64 object-cover" />
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={captureAndUpload} disabled={isUploading} className="flex-1 bg-[#D97706] text-white rounded-xl py-3 font-medium hover:bg-[#B45309] transition-colors disabled:opacity-50">
+            <button
+              type="button"
+              onClick={captureAndUpload}
+              disabled={isUploading}
+              className="flex-1 bg-[#D97706] text-white rounded-xl py-3 font-bold hover:bg-[#B45309] transition-colors disabled:opacity-50"
+            >
               {isUploading ? 'Uploading…' : 'Capture'}
             </button>
-            <button type="button" onClick={stopCamera} disabled={isUploading} className="px-5 bg-neutral-200 text-neutral-900 rounded-xl py-3 font-medium hover:bg-neutral-300 transition-colors disabled:opacity-50">
+            <button
+              type="button"
+              onClick={stopCamera}
+              disabled={isUploading}
+              className="px-5 bg-slate-200 text-slate-900 rounded-xl py-3 font-bold hover:bg-slate-300 transition-colors disabled:opacity-50"
+            >
               Cancel
             </button>
           </div>
@@ -189,17 +204,21 @@ export default function CameraCapture({
 
       {preview && (
         <div className="space-y-3">
-          <div className="relative w-full h-48 rounded-lg overflow-hidden border border-neutral-200">
+          <div className="relative w-full h-48 rounded-xl overflow-hidden border border-slate-200">
             <Image src={preview} alt="Captured photo" fill className="object-cover" />
           </div>
-          <button type="button" onClick={openCamera} className="w-full bg-white border border-[#E2E8F0] text-[#0F172A] rounded-xl py-2 font-bold hover:bg-[#F8FAFC] transition-colors">
+          <button
+            type="button"
+            onClick={openCamera}
+            className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl py-2.5 text-sm font-bold hover:bg-slate-50 transition-colors"
+          >
             Retake Photo
           </button>
         </div>
       )}
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 font-medium">
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 font-semibold">
           {error}
         </p>
       )}

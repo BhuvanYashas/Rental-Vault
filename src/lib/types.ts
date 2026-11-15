@@ -31,6 +31,9 @@ export type Item = {
   grade: Grade | null
   state: ItemState | null
   photos: string[] | null
+  notes?: string | null
+  average_rating?: number | null
+  review_count?: number | null
   created_at: string
 }
 

@@ -36,9 +36,14 @@ export async function returnItem(
 
   if (txnError || !txn) return { error: 'No active rental found for this item' }
 
-  const listing = txn.listings as any
+  const listing = txn.listings as unknown as {
+    rate_per_day?: number
+    deposit?: number
+    items?: { owner_id: string; state: string } | null
+  } | null
   const item = listing?.items
-  const ownerId = item?.owner_id
+  if (!item) return { error: 'Item not found' }
+  const ownerId = item.owner_id
   const ratePerDay = listing?.rate_per_day || 0
   const deposit = listing?.deposit || 0
   

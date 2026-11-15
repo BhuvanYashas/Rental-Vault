@@ -1,68 +1,75 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useState } from 'react'
 
 export default function TiltCard({
   children,
   className = '',
+  maxTilt = 6,
 }: {
   children: React.ReactNode
   className?: string
+  maxTilt?: number
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [transform, setTransform] = useState(
+    'perspective(1100px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0)',
+  )
+  const [glare, setGlare] = useState({ x: 50, y: 20, opacity: 0 })
+  const [isHovered, setIsHovered] = useState(false)
 
-  useEffect(() => {
-    const el = ref.current
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = cardRef.current
     if (!el) return
+    const rect = el.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width
+    const py = (e.clientY - rect.top) / rect.height
 
-    // Respect user's OS setting for reduced motion
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (mediaQuery.matches) return
+    const rotateY = (px - 0.5) * (maxTilt * 2)
+    const rotateX = (0.5 - py) * (maxTilt * 2)
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect()
-      const width = rect.width
-      const height = rect.height
-      const mouseX = e.clientX - rect.left
-      const mouseY = e.clientY - rect.top
+    setTransform(
+      `perspective(1100px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translate3d(0, -6px, 14px)`,
+    )
+    setGlare({ x: px * 100, y: py * 100, opacity: 0.34 })
+  }
 
-      const xPct = mouseX / width - 0.5
-      const yPct = mouseY / height - 0.5
+  function handleMouseEnter() {
+    setIsHovered(true)
+  }
 
-      const tiltX = yPct * -15
-      const tiltY = xPct * 15
-
-      // 👇 Direct DOM manipulation (No React re-renders)
-      el.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.02, 1.02, 1)`
-    }
-
-    const handleMouseEnter = () => {
-      el.style.transition = 'transform 0.1s ease-out'
-    }
-
-    const handleMouseLeave = () => {
-      el.style.transition = 'transform 0.5s ease-out'
-      el.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`
-    }
-
-    el.addEventListener('mousemove', handleMouseMove)
-    el.addEventListener('mouseenter', handleMouseEnter)
-    el.addEventListener('mouseleave', handleMouseLeave)
-
-    return () => {
-      el.removeEventListener('mousemove', handleMouseMove)
-      el.removeEventListener('mouseenter', handleMouseEnter)
-      el.removeEventListener('mouseleave', handleMouseLeave)
-    }
-  }, [])
+  function handleMouseLeave() {
+    setIsHovered(false)
+    setTransform(
+      'perspective(1100px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0)',
+    )
+    setGlare((prev) => ({ ...prev, opacity: 0 }))
+  }
 
   return (
     <div
-      ref={ref}
-      className={`relative will-change-transform ${className}`}
-      style={{ transformStyle: 'preserve-3d' }}
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transform,
+        transformStyle: 'preserve-3d',
+        transition: isHovered
+          ? 'transform 90ms ease-out'
+          : 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+      className={`relative will-change-transform motion-reduce:!transform-none ${className}`}
     >
       {children}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 motion-reduce:hidden"
+        style={{
+          opacity: glare.opacity,
+          background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.08) 45%, transparent 72%)`,
+        }}
+      />
     </div>
   )
 }

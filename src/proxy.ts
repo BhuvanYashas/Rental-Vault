@@ -4,46 +4,74 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  // Check env vars (matching server.ts)
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error("Missing Supabase environment variables in proxy.ts");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return supabaseResponse
   }
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
+  const isHttps =
+    request.nextUrl.protocol === 'https:' ||
+    request.headers.get('x-forwarded-proto')?.includes('https') === true
+  const host =
+    request.headers.get('x-forwarded-host') ||
+    request.headers.get('host') ||
+    ''
+  const isPreviewIframe =
+    isHttps &&
+    (request.headers.get('sec-fetch-dest') === 'iframe' ||
+      host.startsWith('ais-dev-') ||
+      host.startsWith('ais-pre-'))
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    ...(isPreviewIframe
+      ? {
+          cookieOptions: {
+            sameSite: 'none' as const,
+            secure: true,
+            partitioned: true,
+          },
+        }
+      : {}),
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
       },
-    }
-  )
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        )
+        supabaseResponse = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, {
+            ...options,
+            ...(isPreviewIframe
+              ? {
+                  sameSite: 'none' as const,
+                  secure: true,
+                  partitioned: true,
+                }
+              : {}),
+          })
+        )
+      },
+    },
+  })
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Define all routes that require a user to be logged in
   const protectedRoutes = [
-    '/my-rentals', 
-    '/profile', 
-    '/operator', 
-    '/owner', 
-    '/platform'
+    '/my-rentals',
+    '/profile',
+    '/operator',
+    '/owner',
+    '/platform',
   ]
 
-  const isProtectedRoute = protectedRoutes.some(route => 
+  const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   )
 
