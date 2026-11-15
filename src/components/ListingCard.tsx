@@ -18,36 +18,54 @@ export function ListingCard({
   const isAvailable = listing.items.state === 'IN_VAULT'
 
   return (
-    <TiltCard className="h-full" maxTilt={8}>
+    <TiltCard className="h-full" maxTilt={7}>
       <Link
         href={`/listing/${listing.id}`}
         style={{ transformStyle: 'preserve-3d' }}
-        className="group relative flex flex-col h-full vault-title-card-3d rounded-3xl overflow-hidden hover:shadow-[0_32px_56px_-14px_rgba(15,23,42,0.52)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
+        className="group relative flex flex-col h-full vault-title-card-3d rounded-3xl overflow-hidden hover:shadow-[0_32px_56px_-14px_rgba(15,23,42,0.52)] transition-shadow duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
       >
         {/* Top 3D Title Card Header Plate */}
-        <div className="vault-title-header-3d px-5 pt-5 pb-4 text-white relative">
-          <div className="flex items-center justify-between gap-2 text-[11px] font-mono tracking-wider mb-1.5">
+        <div
+          style={{ transformStyle: 'preserve-3d' }}
+          className="vault-title-header-3d px-5 pt-4 pb-4 text-white relative overflow-hidden"
+        >
+          {/* Crisp metallic/amber top rim highlight */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-[#93C5FD]/50 via-[#F97316] to-[#93C5FD]/50 opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+          />
+
+          <div className="flex items-center justify-between gap-2 text-[11px] font-mono tracking-wider mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="uppercase font-bold text-[#93C5FD] truncate">{listing.items.category}</span>
-              <span aria-hidden="true" className="text-slate-500">·</span>
-              <span className="text-slate-300 shrink-0">Grade {listing.items.grade ?? 'A'}</span>
+              <span aria-hidden="true" className="text-slate-600">·</span>
+              <span className="text-slate-300 font-semibold shrink-0">Grade {listing.items.grade ?? 'A'}</span>
             </div>
-            {reviewCount > 0 && (
+
+            {reviewCount > 0 ? (
               <span className="inline-flex items-center gap-1 text-[#FB923C] font-bold tabular-nums shrink-0">
                 <svg className="w-3.5 h-3.5 fill-[#F97316] text-[#F97316]" viewBox="0 0 20 20" aria-hidden="true">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
                 {rating} ({reviewCount})
               </span>
+            ) : (
+              <span
+                className={`text-[10px] font-mono uppercase tracking-widest font-bold shrink-0 ${
+                  isAvailable ? 'text-emerald-400' : 'text-amber-400'
+                }`}
+              >
+                {isAvailable ? 'In Vault' : 'Rented'}
+              </span>
             )}
           </div>
 
-          <h3 className="vault-depth-1 font-extrabold text-white text-xl leading-snug tracking-tight group-hover:text-[#FB923C] transition-colors line-clamp-1">
+          <h3 className="vault-depth-1 font-extrabold text-white text-xl leading-snug tracking-tight group-hover:text-[#FBBF24] transition-colors duration-200 line-clamp-1">
             {listing.items.name}
           </h3>
         </div>
 
-        {/* Middle Full-Fitted 3D Photo Stage */}
+        {/* Middle Full-Fitted 3D Photo Stage + Specular Shimmer Sweep */}
         <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100 vault-stage-3d">
           {photoUrl ? (
             <Image
@@ -56,7 +74,7 @@ export function ListingCard({
               fill
               priority={priority}
               referrerPolicy="no-referrer"
-              className="object-cover group-hover:scale-[1.05] transition-transform duration-300 ease-out"
+              className="object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-out"
               sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
             />
           ) : (
@@ -70,6 +88,12 @@ export function ListingCard({
             </div>
           )}
 
+          {/* Diagonal Specular Sweep Beam on Hover */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-[320%] transition-transform duration-700 ease-out motion-reduce:hidden"
+          />
+
           {!isAvailable && (
             <div className="absolute inset-0 bg-[#0F172A]/55 backdrop-blur-[1.5px] flex items-center justify-center">
               <span className="bg-[#0F172A]/95 text-white text-xs font-mono font-semibold px-3 py-1.5 rounded-lg tracking-wide uppercase shadow-[0_4px_0_0_#020617]">
@@ -80,8 +104,11 @@ export function ListingCard({
         </div>
 
         {/* Bottom 3D Pricing & Action Bar */}
-        <div className="px-5 py-4 mt-auto flex items-center justify-between gap-3 bg-gradient-to-b from-[#F4F8FD] to-[#E2ECF8] border-t border-white/90">
-          <div>
+        <div
+          style={{ transformStyle: 'preserve-3d' }}
+          className="px-5 py-4 mt-auto flex items-center justify-between gap-3 bg-gradient-to-b from-[#F8FBFF] to-[#E4EEF9] border-t border-white/95"
+        >
+          <div className="vault-depth-1">
             <p className="text-xl font-black text-[#0F172A] tabular-nums leading-none">
               ₹{listing.rate_per_day.toLocaleString('en-IN')}
               <span className="text-xs font-semibold text-slate-500 ml-1">/day</span>
@@ -91,9 +118,9 @@ export function ListingCard({
             </p>
           </div>
 
-          <span className="vault-depth-2 inline-flex items-center gap-1 vault-btn-amber-3d text-white px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0">
+          <span className="vault-depth-2 relative overflow-hidden inline-flex items-center gap-1.5 vault-btn-amber-3d text-white px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0">
             <span>{isAvailable ? 'Rent' : 'View'}</span>
-            <span aria-hidden="true" className="group-hover:translate-x-0.5 transition-transform">→</span>
+            <span aria-hidden="true" className="group-hover:translate-x-1 transition-transform duration-200">→</span>
           </span>
         </div>
       </Link>

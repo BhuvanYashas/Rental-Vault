@@ -1,37 +1,58 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useSpring,
+} from 'motion/react'
 
 export default function TiltCard({
   children,
   className = '',
-  maxTilt = 6,
+  maxTilt = 7,
+  spotlightColor = 'rgba(249, 115, 22, 0.22)',
+  borderGlow = true,
 }: {
   children: React.ReactNode
   className?: string
   maxTilt?: number
+  spotlightColor?: string
+  borderGlow?: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
-  const [transform, setTransform] = useState(
-    'perspective(1000px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0)',
-  )
-  const [glare, setGlare] = useState({ x: 50, y: 20, opacity: 0 })
   const [isHovered, setIsHovered] = useState(false)
+
+  const rawRotateX = useMotionValue(0)
+  const rawRotateY = useMotionValue(0)
+  const mouseX = useMotionValue(50)
+  const mouseY = useMotionValue(25)
+  const mousePxX = useMotionValue(160)
+  const mousePxY = useMotionValue(100)
+
+  const springConfig = { stiffness: 280, damping: 24, mass: 0.65 }
+  const rotateX = useSpring(rawRotateX, springConfig)
+  const rotateY = useSpring(rawRotateY, springConfig)
+
+  const glareBg = useMotionTemplate`radial-gradient(circle at ${mouseX}% ${mouseY}%, rgba(255, 255, 255, 0.42), ${spotlightColor} 38%, transparent 72%)`
+  const borderBg = useMotionTemplate`radial-gradient(240px circle at ${mousePxX}px ${mousePxY}px, rgba(249, 115, 22, 0.85), rgba(147, 197, 253, 0.45) 55%, transparent 80%)`
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const el = cardRef.current
     if (!el) return
     const rect = el.getBoundingClientRect()
-    const px = (e.clientX - rect.left) / rect.width
-    const py = (e.clientY - rect.top) / rect.height
+    const relX = e.clientX - rect.left
+    const relY = e.clientY - rect.top
+    const px = relX / rect.width
+    const py = relY / rect.height
 
-    const rotateY = (px - 0.5) * (maxTilt * 2)
-    const rotateX = (0.5 - py) * (maxTilt * 2)
-
-    setTransform(
-      `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translate3d(0, -8px, 18px)`,
-    )
-    setGlare({ x: px * 100, y: py * 100, opacity: 0.42 })
+    rawRotateY.set((px - 0.5) * (maxTilt * 2))
+    rawRotateX.set((0.5 - py) * (maxTilt * 2))
+    mouseX.set(px * 100)
+    mouseY.set(py * 100)
+    mousePxX.set(relX)
+    mousePxY.set(relY)
   }
 
   function handleMouseEnter() {
@@ -40,36 +61,55 @@ export default function TiltCard({
 
   function handleMouseLeave() {
     setIsHovered(false)
-    setTransform(
-      'perspective(1000px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0)',
-    )
-    setGlare((prev) => ({ ...prev, opacity: 0 }))
+    rawRotateX.set(0)
+    rawRotateY.set(0)
   }
 
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform,
-        transformStyle: 'preserve-3d',
-        transition: isHovered
-          ? 'transform 90ms ease-out'
-          : 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)',
-      }}
-      className={`relative will-change-transform motion-reduce:!transform-none ${className}`}
-    >
-      {children}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 rounded-3xl transition-opacity duration-300 motion-reduce:hidden"
+    <div style={{ perspective: '1100px' }} className={`relative ${className}`}>
+      <motion.div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         style={{
-          opacity: glare.opacity,
-          background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.1) 42%, transparent 70%)`,
+          rotateX,
+          rotateY,
+          transformStyle: 'preserve-3d',
         }}
-      />
+        animate={{
+          y: isHovered ? -7 : 0,
+          scale: isHovered ? 1.012 : 1,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 320,
+          damping: 26,
+        }}
+        className="relative h-full will-change-transform rounded-3xl"
+      >
+        {borderGlow && (
+          <motion.div
+            aria-hidden="true"
+            animate={{ opacity: isHovered ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ background: borderBg }}
+            className="pointer-events-none -inset-[1.5px] absolute rounded-[25px] z-0 motion-reduce:hidden"
+          />
+        )}
+
+        <div style={{ transformStyle: 'preserve-3d' }} className="relative z-10 h-full">
+          {children}
+        </div>
+
+        <motion.div
+          aria-hidden="true"
+          animate={{ opacity: isHovered ? 0.85 : 0 }}
+          transition={{ duration: 0.22 }}
+          style={{ background: glareBg }}
+          className="pointer-events-none absolute inset-0 rounded-3xl z-20 mix-blend-overlay motion-reduce:hidden"
+        />
+      </motion.div>
     </div>
   )
 }

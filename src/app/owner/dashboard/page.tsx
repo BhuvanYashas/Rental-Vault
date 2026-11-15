@@ -178,28 +178,41 @@ export default async function OwnerDashboard() {
                 : 'bg-emerald-50 text-emerald-800 border-emerald-200'
 
               return (
-                <TiltCard key={listing.id} maxTilt={5}>
+                <TiltCard key={listing.id} maxTilt={6}>
                   <Link
                     href={`/listing/${listing.id}`}
-                    className="vault-title-card-3d rounded-2xl overflow-hidden flex flex-col justify-between h-full group"
+                    style={{ transformStyle: 'preserve-3d' }}
+                    className="vault-title-card-3d rounded-3xl overflow-hidden flex flex-col justify-between h-full group hover:shadow-[0_32px_56px_-14px_rgba(15,23,42,0.52)] transition-shadow duration-300"
                   >
-                    <div className="vault-title-header-3d px-4 py-3 flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider truncate">
-                        {item.category} · Grade {item.grade ?? 'A'}
-                      </span>
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded border shrink-0 ${statusClass}`}>
-                        {statusLabel}
-                      </span>
+                    <div
+                      style={{ transformStyle: 'preserve-3d' }}
+                      className="vault-title-header-3d px-5 pt-4 pb-4 text-white relative overflow-hidden"
+                    >
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-[#93C5FD]/50 via-[#F97316] to-[#93C5FD]/50 opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+                      />
+                      <div className="flex items-center justify-between gap-2 text-[11px] font-mono tracking-wider mb-1.5">
+                        <span className="text-[#93C5FD] font-bold uppercase truncate">
+                          {item.category} · Grade {item.grade ?? 'A'}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${statusClass}`}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <h3 className="vault-depth-1 font-extrabold text-white text-lg leading-snug tracking-tight group-hover:text-[#FBBF24] transition-colors line-clamp-1">
+                        {item.name}
+                      </h3>
                     </div>
 
-                    <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden">
+                    <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden vault-stage-3d">
                       {photo ? (
                         <Image
                           src={photo}
                           alt={item.name}
                           fill
                           referrerPolicy="no-referrer"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-out"
                           sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
                         />
                       ) : (
@@ -209,21 +222,22 @@ export default async function OwnerDashboard() {
                           </svg>
                         </div>
                       )}
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-[320%] transition-transform duration-700 ease-out motion-reduce:hidden"
+                      />
                     </div>
 
-                    <div className="p-4 flex flex-col justify-between gap-3 flex-1 bg-white">
+                    <div className="px-5 py-4 flex items-center justify-between gap-3 bg-gradient-to-b from-[#F8FBFF] to-[#E4EEF9] border-t border-white/95 text-sm tabular-nums">
                       <div>
-                        <h3 className="font-extrabold text-[#0F172A] text-base leading-snug line-clamp-1">{item.name}</h3>
-                        {(item.review_count ?? 0) > 0 && (
-                          <p className="text-xs font-bold text-amber-600 mt-1 tabular-nums">
-                            ★ {item.average_rating} ({item.review_count})
-                          </p>
-                        )}
+                        <span className="font-black text-[#0F172A] text-lg">₹{listing.rate_per_day}<span className="text-xs font-medium text-slate-500">/day</span></span>
+                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">Deposit ₹{listing.deposit}</p>
                       </div>
-                      <div className="flex items-baseline justify-between pt-3 border-t border-slate-100 text-sm tabular-nums">
-                        <span className="font-black text-[#0F172A]">₹{listing.rate_per_day}<span className="text-xs font-medium text-slate-500">/day</span></span>
-                        <span className="text-xs text-slate-600 font-semibold">Deposit ₹{listing.deposit}</span>
-                      </div>
+                      {(item.review_count ?? 0) > 0 && (
+                        <span className="text-xs font-bold text-amber-600 tabular-nums shrink-0">
+                          ★ {item.average_rating} ({item.review_count})
+                        </span>
+                      )}
                     </div>
                   </Link>
                 </TiltCard>

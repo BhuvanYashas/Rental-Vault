@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import VaultMotionProvider from '@/components/VaultMotionProvider'
 import { Toaster } from 'sonner'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -32,10 +33,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen flex flex-col bg-[#7BA3D0] text-[#0F172A] font-sans antialiased selection:bg-[#EA580C]/25 selection:text-[#0F172A]">
-        <Header />
-        <div className="flex-1">{children}</div>
-        <Footer />
-        <Toaster richColors position="bottom-right" />
+        <VaultMotionProvider>
+          <Header />
+          <div className="flex-1">{children}</div>
+          <Footer />
+          <Toaster richColors position="bottom-right" />
+        </VaultMotionProvider>
       </body>
     </html>
   )

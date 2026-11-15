@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { createClient, hasSupabaseEnv } from '@/lib/supabase/server'
-import { ListingCard } from '@/components/ListingCard'
-import TiltCard from '@/components/TiltCard'
+import VaultHero from '@/components/VaultHero'
+import VaultTrustPillars from '@/components/VaultTrustPillars'
+import VaultListingsGrid from '@/components/VaultListingsGrid'
 import type { Listing } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -93,19 +94,7 @@ export default async function Home({
 
   return (
     <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-12">
-      <header className="mb-8 text-center max-w-4xl mx-auto">
-        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-gradient-to-b from-[#F97316] to-[#EA580C] text-white text-[11px] font-mono uppercase tracking-[0.18em] font-bold mb-4 shadow-[0_6px_18px_-4px_rgba(234,88,12,0.6),0_3px_0_0_#9A3412,inset_0_1px_0_rgba(255,255,255,0.35)]">
-          Neighbourhood Vault · Bengaluru
-        </div>
-
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-[#0F172A] leading-[1.08] text-balance drop-shadow-[0_2px_0_rgba(255,255,255,0.28)]">
-          Idle goods, held in trust.
-        </h1>
-
-        <p className="text-[#0F172A]/85 mt-3.5 text-base md:text-lg font-semibold max-w-2xl mx-auto leading-relaxed">
-          Verified items. Escrow protected. Walk-to-vault. Rent durable goods from a trusted hub in your ward.
-        </p>
-      </header>
+      <VaultHero />
 
       {/* Full-Fitted Search & Filter Console */}
       <section className="mb-8 vault-card-3d rounded-3xl p-4 sm:p-6 space-y-4">
@@ -170,93 +159,36 @@ export default async function Home({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
-          <div className="flex flex-wrap items-center gap-2">
-            {categories.map((cat) => {
-              const isActive = category === cat || (!category && cat === 'All')
-              return (
-                <Link
-                  key={cat}
-                  href={buildFilterHref({ category: cat })}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'vault-btn-navy-3d text-white'
-                      : 'bg-slate-100 text-[#0F172A] border border-slate-200 hover:bg-slate-200/70'
-                  }`}
-                >
-                  {cat}
-                </Link>
-              )
-            })}
-
-            {hasFilters && (
+        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+          {categories.map((cat) => {
+            const isActive = category === cat || (!category && cat === 'All')
+            return (
               <Link
-                href="/"
-                className="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-[#EA580C] text-white shadow-[0_3px_0_0_#9A3412] hover:-translate-y-0.5 transition-all whitespace-nowrap"
+                key={cat}
+                href={buildFilterHref({ category: cat })}
+                className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'vault-btn-navy-3d text-white'
+                    : 'bg-slate-100 text-[#0F172A] border border-slate-200 hover:bg-slate-200/70'
+                }`}
               >
-                Reset filters
+                {cat}
               </Link>
-            )}
-          </div>
+            )
+          })}
 
-          <p className="text-xs font-mono font-bold text-slate-600 tabular-nums">
-            {listings.length} items · {availableCount} ready in vault · {totalReviews} verified reviews
-          </p>
+          {hasFilters && (
+            <Link
+              href="/"
+              className="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-[#EA580C] text-white shadow-[0_3px_0_0_#9A3412] hover:-translate-y-0.5 transition-all whitespace-nowrap"
+            >
+              Reset filters
+            </Link>
+          )}
         </div>
       </section>
 
-      {/* Full-Width 3D Trust Pillars */}
-      <section className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-5">
-        <TiltCard maxTilt={6}>
-          <div style={{ transformStyle: 'preserve-3d' }} className="vault-card-3d rounded-2xl p-5 flex items-start gap-3.5 h-full">
-            <div className="vault-depth-1 w-10 h-10 rounded-xl bg-gradient-to-b from-[#1E293B] to-[#0F172A] text-white flex items-center justify-center shrink-0 shadow-[0_4px_0_0_#020617,inset_0_1px_0_rgba(255,255,255,0.2)]">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-[#0F172A]">Photo-Graded Custody</p>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed font-medium">
-                Condition verified at intake and return by vault operators.
-              </p>
-            </div>
-          </div>
-        </TiltCard>
-
-        <TiltCard maxTilt={6}>
-          <div style={{ transformStyle: 'preserve-3d' }} className="vault-card-3d rounded-2xl p-5 flex items-start gap-3.5 h-full">
-            <div className="vault-depth-1 w-10 h-10 rounded-xl bg-gradient-to-b from-[#F97316] to-[#EA580C] text-white flex items-center justify-center shrink-0 shadow-[0_4px_0_0_#9A3412,inset_0_1px_0_rgba(255,255,255,0.35)]">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-[#0F172A]">Escrow-Protected Deposit</p>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed font-medium">
-                Security deposits held safely until verified return.
-              </p>
-            </div>
-          </div>
-        </TiltCard>
-
-        <TiltCard maxTilt={6}>
-          <div style={{ transformStyle: 'preserve-3d' }} className="vault-card-3d rounded-2xl p-5 flex items-start gap-3.5 h-full">
-            <div className="vault-depth-1 w-10 h-10 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-[0_4px_0_0_#065F46,inset_0_1px_0_rgba(255,255,255,0.35)]">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-[#0F172A]">Walk-to-Vault Pickup</p>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed font-medium">
-                Instant handoff and claim mediation at local hubs.
-              </p>
-            </div>
-          </div>
-        </TiltCard>
-      </section>
+      <VaultTrustPillars />
 
       {!listings || listings.length === 0 ? (
         <div className="text-center py-20 vault-card-3d rounded-3xl px-6">
@@ -281,15 +213,21 @@ export default async function Home({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {(listings as unknown as Listing[]).map((listing, index) => (
-            <ListingCard
-              key={listing.id}
-              listing={listing}
-              priority={index < 4}
-            />
-          ))}
-        </div>
+        <>
+          <VaultListingsGrid listings={listings} />
+
+          <div className="mt-10 pt-6 border-t border-[#0F172A]/15 flex flex-wrap items-center justify-between gap-3 text-xs font-mono font-bold text-[#0F172A]/85 tabular-nums">
+            <span>
+              Showing {listings.length} {listings.length === 1 ? 'item' : 'items'} · {availableCount} ready in vault · {totalReviews} verified {totalReviews === 1 ? 'review' : 'reviews'}
+            </span>
+            <Link
+              href="/owner/new-item"
+              className="text-[#0F172A] hover:text-white transition-colors underline decoration-[#EA580C] decoration-2 underline-offset-4"
+            >
+              Have idle gear? List an item in the vault →
+            </Link>
+          </div>
+        </>
       )}
     </main>
   )

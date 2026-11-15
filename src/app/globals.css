@@ -102,7 +102,7 @@ code, pre, .font-mono {
 
 .vault-title-card-3d {
   background: linear-gradient(180deg, #F8FBFF 0%, #E7F0FA 100%);
-  border: 1px solid rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.94);
   border-bottom: 5px solid #94A3B8;
   box-shadow:
     0 22px 42px -14px rgba(15, 23, 42, 0.42),
@@ -111,11 +111,13 @@ code, pre, .font-mono {
 }
 
 .vault-title-header-3d {
-  background: linear-gradient(155deg, #1E293B 0%, #0F172A 68%, #09101E 100%);
+  background:
+    radial-gradient(120% 90% at 15% 0%, rgba(147, 197, 253, 0.16), transparent 60%),
+    linear-gradient(155deg, #1E293B 0%, #0F172A 68%, #09101E 100%);
   border-bottom: 2px solid #020617;
   box-shadow:
-    0 8px 18px -8px rgba(15, 23, 42, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 10px 22px -10px rgba(15, 23, 42, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .vault-stage-3d {
@@ -126,11 +128,36 @@ code, pre, .font-mono {
 }
 
 .vault-depth-1 {
-  transform: translateZ(14px);
+  transform: translateZ(16px);
 }
 
 .vault-depth-2 {
-  transform: translateZ(24px);
+  transform: translateZ(26px);
+}
+
+@keyframes vault-border-spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.vault-moving-border-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 240%;
+  aspect-ratio: 1 / 1;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 280deg,
+    rgba(255, 255, 255, 0.95) 315deg,
+    #FDBA74 345deg,
+    transparent 360deg
+  );
+  animation: vault-border-spin 3.8s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -143,5 +170,9 @@ code, pre, .font-mono {
   .vault-btn-amber-3d:active:not(:disabled),
   .vault-btn-navy-3d:active:not(:disabled) {
     transform: none;
+  }
+  .vault-moving-border-beam {
+    animation: none;
+    opacity: 0.35;
   }
 }
