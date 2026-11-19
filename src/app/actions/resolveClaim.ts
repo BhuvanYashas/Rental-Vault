@@ -85,7 +85,11 @@ export async function resolveClaim(
     ? `The claim was resolved. A penalty of ₹${claim.damage_amount} was deducted from your wallet.`
     : `The claim against you was resolved in your favor. No penalty was charged.`
     
-  await sendNotification(txn.renter_id, 'Damage Claim Resolved', msg, '/my-rentals')
+  try {
+    await sendNotification(txn.renter_id, 'Damage Claim Resolved', msg, '/my-rentals')
+  } catch (notifyErr) {
+    console.error('Failed to send claim resolution notification:', notifyErr)
+  }
 
   revalidatePath('/operator')
   revalidatePath('/my-rentals')

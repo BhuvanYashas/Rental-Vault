@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendNotification } from './notifications'
 
 function parseIsoDateLocal(dateStr: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
@@ -107,7 +108,7 @@ export async function rentItem(
     .single()
 
   if (walletError || !updatedWallet) {
-    await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId)
+    await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId).eq('state', 'RENTED')
     return { error: 'Wallet balance changed during transaction. Please try again.' }
   }
 
@@ -121,7 +122,7 @@ export async function rentItem(
   })
 
   if (txnError) {
-    await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId)
+    await supabase.from('items').update({ state: 'IN_VAULT' }).eq('id', itemId).eq('state', 'RENTED')
     await supabase.from('profiles').update({ wallet_balance: currentBalance }).eq('id', user.id).eq('wallet_balance', newBalance)
     return { error: txnError.message }
   }
@@ -141,6 +142,17 @@ export async function rentItem(
     notes: trimmed ? `Rental started — ${trimmed}` : 'Rental started',
     photo_url: photoUrl,
   })
+
+  try {
+    await sendNotification(
+      user.id,
+      'Rental Pickup Confirmed',
+      `Your rental for "${itemName}" (${startDate} to ${endDate}) is confirmed. ₹${totalUpfrontCost} (₹${rentalFee} rent + ₹${deposit} deposit) is held in escrow.`,
+      '/my-rentals'
+    )
+  } catch (notifyErr) {
+    console.error('Failed to send rent confirmation notification:', notifyErr)
+  }
 
   revalidatePath('/')
   revalidatePath('/my-rentals')

@@ -41,7 +41,11 @@ export async function verifyKyc(
     ? 'Your ID has been approved. You now have full access to the vault.' 
     : 'Your ID could not be verified. Please upload a clearer image.'
   
-  await sendNotification(targetUserId, title, message, '/profile')
+  try {
+    await sendNotification(targetUserId, title, message, '/profile')
+  } catch (notifyErr) {
+    console.error('Failed to send KYC notification:', notifyErr)
+  }
 
   revalidatePath('/operator')
   revalidatePath('/profile')

@@ -42,12 +42,16 @@ export async function escalateClaim(
   if (error) return { error: error.message }
 
   // 3. Send confirmation to the Renter
-  await sendNotification(
-    user.id,
-    'Re-review Requested',
-    `Your request for re-review of the claim on "${itemName}" has been submitted to the Platform reviewer.`,
-    '/my-rentals'
-  )
+  try {
+    await sendNotification(
+      user.id,
+      'Re-review Requested',
+      `Your request for re-review of the claim on "${itemName}" has been submitted to the Platform reviewer.`,
+      '/my-rentals'
+    )
+  } catch (notifyErr) {
+    console.error('Failed to send escalation notification:', notifyErr)
+  }
 
   revalidatePath('/my-rentals')
   revalidatePath('/operator')

@@ -27,7 +27,7 @@ export type Item = {
   owner_id: string
   name: string
   category: string
-  serial_number: string | null
+  serial_number?: string | null
   grade: Grade | null
   state: ItemState | null
   photos: string[] | null

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Package, Search } from 'lucide-react'
 import { createClient, hasSupabaseEnv } from '@/lib/supabase/server'
 import VaultHero from '@/components/VaultHero'
 import VaultTrustPillars from '@/components/VaultTrustPillars'
@@ -27,7 +28,7 @@ export default async function Home({
       .from('listings')
       .select(`
         id, item_id, rate_per_day, deposit, active,
-        items!inner ( id, owner_id, name, category, serial_number, grade, state, photos, average_rating, review_count, created_at )
+        items!inner ( id, owner_id, name, category, grade, state, photos, average_rating, review_count, created_at )
       `)
       .eq('active', true)
 
@@ -107,21 +108,19 @@ export default async function Home({
     <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-12">
       <VaultHero />
 
-      {/* Full-Fitted Search & Filter Console */}
+      {/* Search & Filter Console */}
       <section className="mb-8 vault-card-3d rounded-3xl p-4 sm:p-6 space-y-4">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
           <form className="relative flex items-center flex-1 group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#0F172A] transition-colors z-10">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 z-10">
+              <Search className="w-4 h-4 stroke-[2]" aria-hidden="true" />
             </div>
             <input
               type="text"
               name="search"
               defaultValue={search}
               placeholder="Search verified gear (e.g. DSLR Camera, Mountain Bike, Projector)..."
-              className="w-full rounded-2xl pl-12 pr-36 py-3.5 text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0F172A]/10 bg-slate-50 border border-slate-200 vault-inset-3d transition-all text-sm sm:text-base font-medium"
+              className="w-full rounded-full pl-11 pr-32 py-3 text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#EA580C]/25 bg-white border border-slate-200 shadow-sm transition-colors text-sm font-medium"
             />
             {category && <input type="hidden" name="category" value={category} />}
             {onlyAvailable && <input type="hidden" name="available" value="1" />}
@@ -139,7 +138,7 @@ export default async function Home({
 
             <button
               type="submit"
-              className="absolute right-1.5 vault-btn-navy-3d text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
+              className="absolute right-1.5 vault-btn-navy-3d text-white px-5 py-2 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
             >
               Search
             </button>
@@ -148,16 +147,16 @@ export default async function Home({
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href={buildFilterHref({ available: onlyAvailable ? '' : '1' })}
-              className={`px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap inline-flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap inline-flex items-center gap-2 ${
                 onlyAvailable
                   ? 'vault-btn-amber-3d text-white'
-                  : 'bg-slate-100 text-[#0F172A] border border-slate-200 hover:bg-slate-200/70'
+                  : 'bg-white text-[#0F172A] border border-slate-200 shadow-sm hover:border-slate-300'
               }`}
             >
               <span>Available Now Only</span>
             </Link>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-2xl p-1">
+            <div className="flex items-center gap-1 bg-white border border-slate-200 shadow-sm rounded-full p-1">
               {[
                 { key: 'newest', label: 'Newest' },
                 { key: 'price_asc', label: 'Price ↑' },
@@ -167,10 +166,10 @@ export default async function Home({
                 <Link
                   key={opt.key}
                   href={buildFilterHref({ sort: opt.key })}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                     activeSort === opt.key
                       ? 'bg-[#0F172A] text-white shadow-sm'
-                      : 'text-slate-600 hover:text-[#0F172A]'
+                      : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {opt.label}
@@ -180,17 +179,17 @@ export default async function Home({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           {categories.map((cat) => {
             const isActive = category === cat || (!category && cat === 'All')
             return (
               <Link
                 key={cat}
                 href={buildFilterHref({ category: cat })}
-                className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                   isActive
                     ? 'vault-btn-navy-3d text-white'
-                    : 'bg-slate-100 text-[#0F172A] border border-slate-200 hover:bg-slate-200/70'
+                    : 'bg-white text-[#0F172A] border border-slate-200 shadow-sm hover:bg-slate-50'
                 }`}
               >
                 {cat}
@@ -201,7 +200,7 @@ export default async function Home({
           {hasFilters && (
             <Link
               href="/"
-              className="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-[#EA580C] text-white shadow-[0_3px_0_0_#9A3412] hover:-translate-y-0.5 transition-all whitespace-nowrap"
+              className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold vault-btn-amber-3d text-white whitespace-nowrap"
             >
               Reset filters
             </Link>
@@ -213,10 +212,8 @@ export default async function Home({
 
       {!listings || listings.length === 0 ? (
         <div className="text-center py-20 vault-card-3d rounded-3xl px-6">
-          <div className="w-14 h-14 rounded-2xl bg-[#0F172A] text-white flex items-center justify-center mx-auto mb-4 shadow-[0_4px_0_0_#020617]">
-            <svg className="w-7 h-7 text-[#F97316]" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
+          <div className="w-14 h-14 rounded-2xl bg-[#0F172A] text-white flex items-center justify-center mx-auto mb-5 shadow-md">
+            <Package className="w-7 h-7 text-[#F97316]" aria-hidden="true" />
           </div>
           <h3 className="text-xl font-extrabold text-[#0F172A] mb-1.5">No items found</h3>
           <p className="text-slate-600 text-sm font-medium mb-6 max-w-md mx-auto">
@@ -237,13 +234,13 @@ export default async function Home({
         <>
           <VaultListingsGrid listings={listings} />
 
-          <div className="mt-10 pt-6 border-t border-[#0F172A]/15 flex flex-wrap items-center justify-between gap-3 text-xs font-mono font-bold text-[#0F172A]/85 tabular-nums">
+          <div className="mt-10 bg-white/85 backdrop-blur-sm border border-white rounded-2xl shadow-sm px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono font-bold text-[#0F172A] tabular-nums">
             <span>
               Showing {listings.length} {listings.length === 1 ? 'item' : 'items'} · {availableCount} ready in vault · {totalReviews} verified {totalReviews === 1 ? 'review' : 'reviews'}
             </span>
             <Link
               href="/owner/new-item"
-              className="text-[#0F172A] hover:text-white transition-colors underline decoration-[#EA580C] decoration-2 underline-offset-4"
+              className="text-[#0F172A] hover:text-[#EA580C] transition-colors underline decoration-[#EA580C] decoration-2 underline-offset-4"
             >
               Have idle gear? List an item in the vault →
             </Link>

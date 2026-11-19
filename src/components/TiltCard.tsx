@@ -5,14 +5,16 @@ import {
   motion,
   useMotionTemplate,
   useMotionValue,
+  useReducedMotion,
   useSpring,
+  useTransform,
 } from 'motion/react'
 
 export default function TiltCard({
   children,
   className = '',
   maxTilt = 7,
-  spotlightColor = 'rgba(249, 115, 22, 0.22)',
+  spotlightColor = 'rgba(249, 115, 22, 0.14)',
   borderGlow = true,
 }: {
   children: React.ReactNode
@@ -22,93 +24,94 @@ export default function TiltCard({
   borderGlow?: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const prefersReducedMotion = useReducedMotion()
   const [isHovered, setIsHovered] = useState(false)
 
-  const rawRotateX = useMotionValue(0)
-  const rawRotateY = useMotionValue(0)
-  const mouseX = useMotionValue(50)
-  const mouseY = useMotionValue(25)
-  const mousePxX = useMotionValue(160)
-  const mousePxY = useMotionValue(100)
+  const pointerX = useMotionValue(0.5)
+  const pointerY = useMotionValue(0.5)
 
-  const springConfig = { stiffness: 280, damping: 24, mass: 0.65 }
-  const rotateX = useSpring(rawRotateX, springConfig)
-  const rotateY = useSpring(rawRotateY, springConfig)
+  const springConfig = { stiffness: 260, damping: 24, mass: 0.6 }
+  const smoothX = useSpring(pointerX, springConfig)
+  const smoothY = useSpring(pointerY, springConfig)
 
-  const glareBg = useMotionTemplate`radial-gradient(circle at ${mouseX}% ${mouseY}%, rgba(255, 255, 255, 0.42), ${spotlightColor} 38%, transparent 72%)`
-  const borderBg = useMotionTemplate`radial-gradient(240px circle at ${mousePxX}px ${mousePxY}px, rgba(249, 115, 22, 0.85), rgba(147, 197, 253, 0.45) 55%, transparent 80%)`
+  const rotateX = useTransform(smoothY, [0, 1], [maxTilt, -maxTilt])
+  const rotateY = useTransform(smoothX, [0, 1], [-maxTilt, maxTilt])
+
+  const spotX = useTransform(smoothX, (v) => `${(v * 100).toFixed(1)}%`)
+  const spotY = useTransform(smoothY, (v) => `${(v * 100).toFixed(1)}%`)
+
+  const spotlightBg = useMotionTemplate`radial-gradient(360px circle at ${spotX} ${spotY}, ${spotlightColor}, transparent 72%)`
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const el = cardRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const relX = e.clientX - rect.left
-    const relY = e.clientY - rect.top
-    const px = relX / rect.width
-    const py = relY / rect.height
-
-    rawRotateY.set((px - 0.5) * (maxTilt * 2))
-    rawRotateX.set((0.5 - py) * (maxTilt * 2))
-    mouseX.set(px * 100)
-    mouseY.set(py * 100)
-    mousePxX.set(relX)
-    mousePxY.set(relY)
+    if (prefersReducedMotion || !cardRef.current) return
+    const rect = cardRef.current.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+    const nx = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
+    const ny = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height))
+    pointerX.set(nx)
+    pointerY.set(ny)
   }
 
   function handleMouseEnter() {
+    if (prefersReducedMotion) return
     setIsHovered(true)
   }
 
   function handleMouseLeave() {
     setIsHovered(false)
-    rawRotateX.set(0)
-    rawRotateY.set(0)
+    pointerX.set(0.5)
+    pointerY.set(0.5)
   }
 
   return (
-    <div style={{ perspective: '1100px' }} className={`relative ${className}`}>
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{ perspective: '1000px' }}
+      className={`relative h-full ${className}`}
+    >
       <motion.div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          rotateX,
-          rotateY,
-          transformStyle: 'preserve-3d',
-        }}
-        animate={{
-          y: isHovered ? -7 : 0,
-          scale: isHovered ? 1.012 : 1,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 320,
-          damping: 26,
-        }}
-        className="relative h-full will-change-transform rounded-3xl"
+        style={
+          prefersReducedMotion
+            ? undefined
+            : {
+                rotateX,
+                rotateY,
+                transformStyle: 'preserve-3d',
+              }
+        }
+        animate={
+          prefersReducedMotion
+            ? undefined
+            : {
+                y: isHovered ? -4 : 0,
+              }
+        }
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        className="relative h-full will-change-transform"
       >
-        {borderGlow && (
+        {children}
+
+        {!prefersReducedMotion && (
+          <motion.div
+            aria-hidden="true"
+            style={{ background: spotlightBg }}
+            animate={{ opacity: isHovered ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="pointer-events-none absolute inset-0 rounded-3xl z-20"
+          />
+        )}
+
+        {borderGlow && !prefersReducedMotion && (
           <motion.div
             aria-hidden="true"
             animate={{ opacity: isHovered ? 1 : 0 }}
             transition={{ duration: 0.2 }}
-            style={{ background: borderBg }}
-            className="pointer-events-none -inset-[1.5px] absolute rounded-[25px] z-0 motion-reduce:hidden"
+            className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/60 z-20"
           />
         )}
-
-        <div style={{ transformStyle: 'preserve-3d' }} className="relative z-10 h-full">
-          {children}
-        </div>
-
-        <motion.div
-          aria-hidden="true"
-          animate={{ opacity: isHovered ? 0.85 : 0 }}
-          transition={{ duration: 0.22 }}
-          style={{ background: glareBg }}
-          className="pointer-events-none absolute inset-0 rounded-3xl z-20 mix-blend-overlay motion-reduce:hidden"
-        />
       </motion.div>
     </div>
   )

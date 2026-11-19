@@ -74,12 +74,16 @@ export async function openClaim(
   if (insertError || !claim) return { error: insertError?.message ?? 'Failed to create claim' }
 
   // Notify the Renter
-  await sendNotification(
-    txn.renter_id,
-    'Damage Claim Filed',
-    `A damage claim of ₹${damageAmount} has been filed for your rental (${item?.name}). Please review it in your dashboard.`,
-    '/my-rentals'
-  )
+  try {
+    await sendNotification(
+      txn.renter_id,
+      'Damage Claim Filed',
+      `A damage claim of ₹${damageAmount} has been filed for your rental (${item?.name}). Please review it in your dashboard.`,
+      '/my-rentals'
+    )
+  } catch (notifyErr) {
+    console.error('Failed to send damage claim notification:', notifyErr)
+  }
 
   revalidatePath('/operator')
   revalidatePath('/my-rentals')

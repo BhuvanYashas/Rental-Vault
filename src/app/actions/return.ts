@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendNotification } from './notifications'
 
 export async function returnItem(
   listingId: string,
@@ -25,7 +26,7 @@ export async function returnItem(
       id, renter_id, end_date, escrow_amount,
       listings (
         rate_per_day, deposit,
-        items ( owner_id, state )
+        items ( name, owner_id, state )
       )
     `)
     .eq('listing_id', listingId)
@@ -39,7 +40,7 @@ export async function returnItem(
   const listing = txn.listings as unknown as {
     rate_per_day?: number
     deposit?: number
-    items?: { owner_id: string; state: string } | null
+    items?: { name?: string; owner_id: string; state: string } | null
   } | null
   const item = listing?.items
   if (!item) return { error: 'Item not found' }
@@ -90,13 +91,25 @@ export async function returnItem(
     return { error: 'This item has already been returned or is currently in dispute.' }
   }
 
-  // 7. Mark the transaction complete
-  const { error: updateTxnError } = await supabase
+  // 7. Mark the transaction complete atomically
+  const { data: updatedTxn, error: updateTxnError } = await supabase
     .from('transactions')
     .update({ status: 'RETURNED' })
     .eq('id', txn.id)
+    .eq('status', 'ACTIVE')
+    .select('id')
+    .single()
 
-  if (updateTxnError) return { error: updateTxnError.message }
+  if (updateTxnError || !updatedTxn) {
+    await supabase
+      .from('items')
+      .update({ state: 'RENTED' })
+      .eq('id', itemId)
+      .eq('state', 'IN_VAULT')
+    return {
+      error: updateTxnError?.message ?? 'Rental transaction is no longer active.',
+    }
+  }
 
   // 8. Pay the Owner
   const { data: ownerProfile } = await supabase.from('profiles').select('wallet_balance').eq('id', ownerId).single()
@@ -137,6 +150,18 @@ export async function returnItem(
     notes: finalNote,
     photo_url: photoUrl,
   })
+
+  try {
+    const itemLabel = item.name || 'your item'
+    await sendNotification(
+      ownerId,
+      'Item Returned & Payout Released',
+      `Your item "${itemLabel}" has been returned to the vault. ₹${ownerPayout} has been released to your wallet${lateFee > 0 ? ` (includes ₹${lateFee} late fee)` : ''}.`,
+      '/owner/dashboard'
+    )
+  } catch (notifyErr) {
+    console.error('Failed to send return notification:', notifyErr)
+  }
 
   revalidatePath('/')
   revalidatePath('/my-rentals')

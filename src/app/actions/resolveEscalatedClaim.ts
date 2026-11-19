@@ -78,12 +78,26 @@ export async function resolveEscalatedClaim(
 
   if (updateError) return { error: updateError.message }
 
-  // 4. Notify the Renter
-  const renterMsg = resolution === 'RENTER_WINS' 
+  // 4. Notify both Renter and Owner
+  const renterMsg = resolution === 'RENTER_WINS'
     ? `The platform reviewed your case and reversed the decision in your favor. ₹${claim.damage_amount} has been refunded to your wallet.`
     : `The platform reviewed your case and upheld the operator's decision. The claim stands.`
-    
-  await sendNotification(txn.renter_id, 'Platform Review Complete', renterMsg, '/my-rentals')
+
+  const ownerMsg = resolution === 'RENTER_WINS'
+    ? `The platform reviewed the escalated claim on "${item.name}" and ruled in favor of the renter. ₹${claim.damage_amount} has been deducted from your wallet.`
+    : `The platform reviewed the escalated claim on "${item.name}" and upheld the vault's decision in your favor.`
+
+  try {
+    await sendNotification(txn.renter_id, 'Platform Review Complete', renterMsg, '/my-rentals')
+  } catch (notifyErr) {
+    console.error('Failed to send renter ruling notification:', notifyErr)
+  }
+
+  try {
+    await sendNotification(item.owner_id, 'Platform Review Complete', ownerMsg, '/owner/dashboard')
+  } catch (notifyErr) {
+    console.error('Failed to send owner ruling notification:', notifyErr)
+  }
 
   revalidatePath('/my-rentals')
   revalidatePath('/operator')

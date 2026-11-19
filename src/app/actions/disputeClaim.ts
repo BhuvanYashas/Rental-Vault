@@ -42,21 +42,25 @@ export async function disputeClaim(
 
   if (error) return { error: error.message }
 
-  // 3. Send a notification to all Operators
-  const { data: operators } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('role', 'operator')
+  // 3. Send a notification to all Operators and Platform reviewers
+  try {
+    const { data: reviewers } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .in('role', ['operator', 'platform'])
 
-  if (operators && operators.length > 0) {
-    for (const op of operators) {
-      await sendNotification(
-        op.id,
-        'Claim Disputed',
-        `The renter has disputed the damage claim on "${itemName}". Please review the new evidence/reason.`,
-        '/operator'
-      )
+    if (reviewers && reviewers.length > 0) {
+      for (const reviewer of reviewers) {
+        await sendNotification(
+          reviewer.id,
+          'Claim Disputed',
+          `The renter has disputed the damage claim on "${itemName}". Please review the new evidence/reason.`,
+          reviewer.role === 'platform' ? '/platform' : '/operator'
+        )
+      }
     }
+  } catch (notifyErr) {
+    console.error('Failed to send dispute notifications:', notifyErr)
   }
 
   revalidatePath('/my-rentals')

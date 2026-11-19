@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="mt-16 border-t border-[#0F172A]/15 bg-[#0F172A] text-slate-300">
+    <footer className="mt-16 border-t border-white/10 bg-[#0F172A] text-slate-300">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
           <p className="text-white font-extrabold text-lg tracking-tight">Rental Vault</p>

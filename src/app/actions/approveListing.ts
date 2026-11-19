@@ -48,12 +48,16 @@ export async function approveListing(
   const { data: itemData } = await supabase.from('items').select('owner_id, name').eq('id', itemId).single()
   
   if (itemData?.owner_id) {
-    await sendNotification(
-      itemData.owner_id,
-      'Listing Approved',
-      `Your item "${itemData.name}" has been inspected and is now live in the vault!`,
-      '/owner/dashboard'
-    )
+    try {
+      await sendNotification(
+        itemData.owner_id,
+        'Listing Approved',
+        `Your item "${itemData.name}" has been inspected and is now live in the vault!`,
+        '/owner/dashboard'
+      )
+    } catch (notifyErr) {
+      console.error('Failed to send listing approval notification:', notifyErr)
+    }
   }
 
   revalidatePath('/')

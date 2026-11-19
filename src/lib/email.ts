@@ -1,15 +1,15 @@
 import 'server-only'
 import { Resend } from 'resend'
 
-// 1. Check for missing env vars to prevent silent crashes
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("Missing RESEND_API_KEY environment variable");
-}
-
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function sendEmail(to: string, subject: string, html: string) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.error('Missing RESEND_API_KEY environment variable; skipping email send')
+    return { success: false, error: 'Missing RESEND_API_KEY' }
+  }
+
   try {
+    const resend = new Resend(apiKey)
     const { data, error } = await resend.emails.send({
       from: 'Rental Vault <onboarding@resend.dev>',
       to: [to],
