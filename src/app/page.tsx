@@ -3,6 +3,7 @@ import { createClient, hasSupabaseEnv } from '@/lib/supabase/server'
 import VaultHero from '@/components/VaultHero'
 import VaultTrustPillars from '@/components/VaultTrustPillars'
 import VaultListingsGrid from '@/components/VaultListingsGrid'
+import { getPreviewListings } from '@/lib/mockCatalog'
 import type { Listing } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -71,20 +72,30 @@ export default async function Home({
       'All',
       ...Array.from(new Set(categoryData?.map((c) => c.category).filter(Boolean))),
     ] as string[]
+  } else {
+    const preview = getPreviewListings({
+      category,
+      search,
+      onlyAvailable,
+      sort: activeSort,
+    })
+    listings = preview.listings
+    categories = preview.categories
   }
 
   const hasFilters = Boolean(search || (category && category !== 'All') || onlyAvailable || (sort && sort !== 'newest'))
   const availableCount = listings.filter((l) => l.items?.state === 'IN_VAULT').length
   const totalReviews = listings.reduce((sum, l) => sum + (l.items?.review_count ?? 0), 0)
 
-  function buildFilterHref(overrides: { category?: string; available?: string; sort?: string }) {
+  function buildFilterHref(overrides: { category?: string; available?: string; sort?: string; search?: string }) {
     const params = new URLSearchParams()
     const nextCategory = overrides.category !== undefined ? overrides.category : category
     const nextAvailable = overrides.available !== undefined ? overrides.available : available
     const nextSort = overrides.sort !== undefined ? overrides.sort : sort
+    const nextSearch = overrides.search !== undefined ? overrides.search : search
 
     if (nextCategory && nextCategory !== 'All') params.set('category', nextCategory)
-    if (search) params.set('search', search)
+    if (nextSearch) params.set('search', nextSearch)
     if (nextAvailable === '1') params.set('available', '1')
     if (nextSort && nextSort !== 'newest') params.set('sort', nextSort)
 
@@ -110,11 +121,21 @@ export default async function Home({
               name="search"
               defaultValue={search}
               placeholder="Search verified gear (e.g. DSLR Camera, Mountain Bike, Projector)..."
-              className="w-full rounded-2xl pl-12 pr-28 py-3.5 text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0F172A]/10 bg-slate-50 border border-slate-200 vault-inset-3d transition-all text-sm sm:text-base font-medium"
+              className="w-full rounded-2xl pl-12 pr-36 py-3.5 text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0F172A]/10 bg-slate-50 border border-slate-200 vault-inset-3d transition-all text-sm sm:text-base font-medium"
             />
             {category && <input type="hidden" name="category" value={category} />}
             {onlyAvailable && <input type="hidden" name="available" value="1" />}
             {activeSort !== 'newest' && <input type="hidden" name="sort" value={activeSort} />}
+
+            {search && (
+              <Link
+                href={buildFilterHref({ search: '' })}
+                aria-label="Clear search"
+                className="absolute right-24 text-xs font-bold text-slate-500 hover:text-[#0F172A] px-2 py-1 rounded-lg transition-colors"
+              >
+                Clear
+              </Link>
+            )}
 
             <button
               type="submit"

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useMemo, useState } from 'react'
+import { createClient, hasSupabaseBrowserEnv } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 import TiltCard from './TiltCard'
@@ -9,12 +9,19 @@ import TiltCard from './TiltCard'
 export default function KYCUpload({ currentStatus }: { currentStatus: string }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(
+    () => (hasSupabaseBrowserEnv() ? createClient() : null),
+    [],
+  )
   const router = useRouter()
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!supabase) {
+      setError('Authentication is unavailable in preview mode.')
+      return
+    }
 
     setUploading(true)
     setError(null)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, hasSupabaseBrowserEnv } from '@/lib/supabase/client'
 
 type ChatMessage = {
   id: string
@@ -24,23 +24,28 @@ export default function ChatModal({
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => hasSupabaseBrowserEnv())
   const [error, setError] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = useMemo(
+    () => (hasSupabaseBrowserEnv() ? createClient() : null),
+    [],
+  )
 
   useEffect(() => {
+    if (!supabase) return
+    const client = supabase
     async function initChat() {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await client.auth.getSession()
       if (session) {
-        supabase.realtime.setAuth(session.access_token)
+        client.realtime.setAuth(session.access_token)
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await client.auth.getUser()
       setCurrentUser(user)
 
-      const { data } = await supabase
+      const { data } = await client
         .from('messages')
         .select('*')
         .eq('transaction_id', transactionId)
@@ -51,7 +56,7 @@ export default function ChatModal({
     }
     initChat()
 
-    const channel = supabase.channel(`chat-${transactionId}`)
+    const channel = client.channel(`chat-${transactionId}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -76,7 +81,7 @@ export default function ChatModal({
       })
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => { client.removeChannel(channel) }
   }, [transactionId, supabase])
 
   useEffect(() => {
@@ -85,7 +90,7 @@ export default function ChatModal({
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
-    if (!newMessage.trim() || !currentUser) return
+    if (!newMessage.trim() || !currentUser || !supabase) return
 
     const content = newMessage.trim()
     setNewMessage('')

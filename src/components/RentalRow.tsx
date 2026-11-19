@@ -122,6 +122,7 @@ export default function RentalRow({
                 alt={`${item.name} intake`}
                 width={400}
                 height={300}
+                referrerPolicy="no-referrer"
                 className="w-full h-32 object-cover rounded-lg border border-slate-200"
               />
             </div>
@@ -134,6 +135,7 @@ export default function RentalRow({
                 alt={`${item.name} return`}
                 width={400}
                 height={300}
+                referrerPolicy="no-referrer"
                 className="w-full h-32 object-cover rounded-lg border border-slate-200"
               />
             </div>

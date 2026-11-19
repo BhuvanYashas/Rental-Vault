@@ -205,7 +205,7 @@ export default function CameraCapture({
       {preview && (
         <div className="space-y-3">
           <div className="relative w-full h-48 rounded-xl overflow-hidden border border-slate-200">
-            <Image src={preview} alt="Captured photo" fill className="object-cover" />
+            <Image src={preview} alt="Captured photo" fill referrerPolicy="no-referrer" className="object-cover" />
           </div>
           <button
             type="button"

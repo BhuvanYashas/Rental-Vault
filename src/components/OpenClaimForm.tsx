@@ -107,6 +107,7 @@ export default function OpenClaimForm({
                     src={p.url}
                     alt={p.label}
                     fill
+                    referrerPolicy="no-referrer"
                     className="object-cover"
                   />
                 </div>

@@ -15,16 +15,14 @@ export default function VaultListingsGrid({ listings }: { listings: Listing[] })
         return (
           <motion.div
             key={listing.id}
-            initial={{ opacity: 0, y: 22 }}
+            initial={false}
             animate={{
               opacity: isDimmed ? 0.86 : 1,
-              y: 0,
               scale: isDimmed ? 0.985 : 1,
             }}
             transition={{
               opacity: { duration: 0.22 },
               scale: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
-              y: { duration: 0.42, delay: Math.min(index * 0.05, 0.35), ease: [0.22, 1, 0.36, 1] },
             }}
             onMouseEnter={() => setHoveredId(listing.id)}
             onMouseLeave={() => setHoveredId(null)}

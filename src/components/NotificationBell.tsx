@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, hasSupabaseBrowserEnv } from '@/lib/supabase/client'
 
 type NotificationRecord = {
   id: string
@@ -18,9 +18,13 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<NotificationRecord[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = useMemo(
+    () => (hasSupabaseBrowserEnv() ? createClient() : null),
+    [],
+  )
 
   async function refreshNotifications() {
+    if (!supabase) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -35,9 +39,11 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
+    if (!supabase) return
     let active = true
 
     async function loadInitial() {
+      if (!supabase) return
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !active) return
 
@@ -79,11 +85,13 @@ export default function NotificationBell() {
   const unreadCount = notifications.filter((n) => !n.read).length
 
   async function markAsRead(id: string) {
+    if (!supabase) return
     await supabase.from('notifications').update({ read: true }).eq('id', id)
     await refreshNotifications()
   }
 
   async function markAllAsRead() {
+    if (!supabase) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)

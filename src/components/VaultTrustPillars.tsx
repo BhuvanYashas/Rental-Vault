@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'motion/react'
 import TiltCard from './TiltCard'
 
 const PILLARS = [
@@ -44,18 +43,8 @@ const PILLARS = [
 export default function VaultTrustPillars() {
   return (
     <section className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-5">
-      {PILLARS.map((pillar, index) => (
-        <motion.div
-          key={pillar.title}
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{
-            duration: 0.42,
-            delay: index * 0.08,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        >
+      {PILLARS.map((pillar) => (
+        <div key={pillar.title}>
           <TiltCard maxTilt={6} spotlightColor={pillar.spotlight}>
             <div
               style={{ transformStyle: 'preserve-3d' }}
@@ -74,7 +63,7 @@ export default function VaultTrustPillars() {
               </div>
             </div>
           </TiltCard>
-        </motion.div>
+        </div>
       ))}
     </section>
   )

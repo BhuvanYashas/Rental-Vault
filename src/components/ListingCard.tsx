@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Listing } from '@/lib/types'
+import { getFallbackItemPhoto, resolveItemPhotoUrl } from '@/lib/itemPhotos'
 import TiltCard from './TiltCard'
+import VaultImage from './VaultImage'
 
 export function ListingCard({
   listing,
@@ -12,7 +13,15 @@ export function ListingCard({
 }) {
   if (!listing.items) return null
 
-  const photoUrl = listing.items.photos?.[0]
+  const photoUrl = resolveItemPhotoUrl(
+    listing.items.name,
+    listing.items.category,
+    listing.items.photos,
+  )
+  const fallbackPhotoUrl = getFallbackItemPhoto(
+    listing.items.name,
+    listing.items.category,
+  )
   const rating = listing.items.average_rating ?? 0
   const reviewCount = listing.items.review_count ?? 0
   const isAvailable = listing.items.state === 'IN_VAULT'
@@ -43,11 +52,17 @@ export function ListingCard({
             </div>
 
             {reviewCount > 0 ? (
-              <span className="inline-flex items-center gap-1 text-[#FB923C] font-bold tabular-nums shrink-0">
-                <svg className="w-3.5 h-3.5 fill-[#F97316] text-[#F97316]" viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                {rating} ({reviewCount})
+              <span className="inline-flex items-center gap-1.5 shrink-0">
+                <span
+                  aria-label={isAvailable ? 'In Vault' : 'Rented'}
+                  className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-emerald-400' : 'bg-amber-400'}`}
+                />
+                <span className="inline-flex items-center gap-1 text-[#FB923C] font-bold tabular-nums">
+                  <svg className="w-3.5 h-3.5 fill-[#F97316] text-[#F97316]" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  {rating} ({reviewCount})
+                </span>
               </span>
             ) : (
               <span
@@ -67,26 +82,15 @@ export function ListingCard({
 
         {/* Middle Full-Fitted 3D Photo Stage + Specular Shimmer Sweep */}
         <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100 vault-stage-3d">
-          {photoUrl ? (
-            <Image
-              src={photoUrl}
-              alt={listing.items.name}
-              fill
-              priority={priority}
-              referrerPolicy="no-referrer"
-              className="object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-out"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#DBE7F5] via-slate-100 to-[#C8DAEE] text-[#334155] gap-2">
-              <div className="w-12 h-12 rounded-xl bg-white/85 shadow-[0_4px_0_0_#CBD5E1] flex items-center justify-center text-[#0F172A]">
-                <svg aria-hidden="true" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
-              </div>
-              <span className="text-xs font-semibold text-slate-600">{listing.items.category}</span>
-            </div>
-          )}
+          <VaultImage
+            src={photoUrl}
+            fallbackSrc={fallbackPhotoUrl}
+            alt={listing.items.name}
+            fill
+            priority={priority}
+            className="object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-out"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+          />
 
           {/* Diagonal Specular Sweep Beam on Hover */}
           <div

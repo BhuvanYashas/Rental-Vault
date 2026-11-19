@@ -8,12 +8,25 @@ import { createListing } from '@/app/actions/createListing'
 
 function suggestCategory(name: string) {
   const lower = name.toLowerCase()
-  if (lower.includes('camera') || lower.includes('projector') || lower.includes('playstation') || lower.includes('ipad') || lower.includes('screen')) return 'Electronics'
-  if (lower.includes('drill') || lower.includes('saw') || lower.includes('compressor')) return 'Power Tool'
+  if (
+    lower.includes('camera') ||
+    lower.includes('dslr') ||
+    lower.includes('lens') ||
+    lower.includes('tripod') ||
+    lower.includes('projector') ||
+    lower.includes('playstation') ||
+    lower.includes('ps5') ||
+    lower.includes('ipad') ||
+    lower.includes('screen') ||
+    lower.includes('monitor') ||
+    lower.includes('speaker') ||
+    lower.includes('headphone')
+  ) return 'Electronics'
+  if (lower.includes('drill') || lower.includes('driver') || lower.includes('impact') || lower.includes('saw') || lower.includes('compressor')) return 'Power Tool'
   if (lower.includes('table') || lower.includes('chair') || lower.includes('desk')) return 'Furniture'
-  if (lower.includes('iron') || lower.includes('purifier') || lower.includes('cooktop') || lower.includes('grinder') || lower.includes('vacuum') || lower.includes('machine')) return 'Appliance'
-  if (lower.includes('tent') || lower.includes('bike')) return 'Outdoor'
-  if (lower.includes('guitar')) return 'Music'
+  if (lower.includes('iron') || lower.includes('purifier') || lower.includes('cooktop') || lower.includes('grinder') || lower.includes('mixer') || lower.includes('vacuum') || lower.includes('machine')) return 'Appliance'
+  if (lower.includes('tent') || lower.includes('bike') || lower.includes('cycle')) return 'Outdoor'
+  if (lower.includes('guitar') || lower.includes('keyboard') || lower.includes('piano')) return 'Music'
   return null
 }
 

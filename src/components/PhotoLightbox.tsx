@@ -51,6 +51,7 @@ export default function PhotoLightbox({
             src={zoomedImage}
             alt="Zoomed evidence"
             fill
+            referrerPolicy="no-referrer"
             className="object-contain"
             sizes="100vw"
             priority
@@ -91,7 +92,7 @@ export default function PhotoLightbox({
                 className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
                 onClick={() => setZoomedImage(intakeUrl)}
               >
-                <Image src={intakeUrl} alt="Intake" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+                <Image src={intakeUrl} alt="Intake" fill referrerPolicy="no-referrer" className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
               </div>
             </div>
           )}
@@ -102,7 +103,7 @@ export default function PhotoLightbox({
                 className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in hover:opacity-90 transition shadow-sm"
                 onClick={() => setZoomedImage(returnUrl)}
               >
-                <Image src={returnUrl} alt="Return" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+                <Image src={returnUrl} alt="Return" fill referrerPolicy="no-referrer" className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
               </div>
             </div>
           )}

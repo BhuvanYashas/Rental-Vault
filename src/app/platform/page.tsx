@@ -149,6 +149,7 @@ export default async function PlatformPage() {
                               alt={`Evidence ${i + 1}`}
                               width={200}
                               height={200}
+                              referrerPolicy="no-referrer"
                               className="w-32 h-32 object-cover"
                             />
                           </a>

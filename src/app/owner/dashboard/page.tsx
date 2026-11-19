@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getFallbackItemPhoto, resolveItemPhotoUrl } from '@/lib/itemPhotos'
 import ReturnedRentalRow from '@/components/ReturnedRentalRow'
 import TiltCard from '@/components/TiltCard'
+import VaultImage from '@/components/VaultImage'
 
 export const dynamic = 'force-dynamic'
 
@@ -163,7 +164,8 @@ export default async function OwnerDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {typedOwnedListings.map((listing) => {
               const item = listing.items
-              const photo = item.photos?.[0]
+              const photo = resolveItemPhotoUrl(item.name, item.category, item.photos)
+              const fallbackPhoto = getFallbackItemPhoto(item.name, item.category)
               const statusLabel = !listing.active
                 ? 'Pending Approval'
                 : item.state === 'RENTED'
@@ -206,22 +208,14 @@ export default async function OwnerDashboard() {
                     </div>
 
                     <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden vault-stage-3d">
-                      {photo ? (
-                        <Image
-                          src={photo}
-                          alt={item.name}
-                          fill
-                          referrerPolicy="no-referrer"
-                          className="object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-out"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
-                          <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
-                          </svg>
-                        </div>
-                      )}
+                      <VaultImage
+                        src={photo}
+                        fallbackSrc={fallbackPhoto}
+                        alt={item.name}
+                        fill
+                        className="object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-out"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                      />
                       <div
                         aria-hidden="true"
                         className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-[320%] transition-transform duration-700 ease-out motion-reduce:hidden"
@@ -230,8 +224,8 @@ export default async function OwnerDashboard() {
 
                     <div className="px-5 py-4 flex items-center justify-between gap-3 bg-gradient-to-b from-[#F8FBFF] to-[#E4EEF9] border-t border-white/95 text-sm tabular-nums">
                       <div>
-                        <span className="font-black text-[#0F172A] text-lg">₹{listing.rate_per_day}<span className="text-xs font-medium text-slate-500">/day</span></span>
-                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">Deposit ₹{listing.deposit}</p>
+                        <span className="font-black text-[#0F172A] text-lg">₹{listing.rate_per_day.toLocaleString('en-IN')}<span className="text-xs font-medium text-slate-500">/day</span></span>
+                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">Deposit ₹{listing.deposit.toLocaleString('en-IN')}</p>
                       </div>
                       {(item.review_count ?? 0) > 0 && (
                         <span className="text-xs font-bold text-amber-600 tabular-nums shrink-0">

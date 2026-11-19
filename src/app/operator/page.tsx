@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
+import { getFallbackItemPhoto, resolveItemPhotoUrl } from '@/lib/itemPhotos'
 import ReturnedRentalRow from '@/components/ReturnedRentalRow'
 import ReturnButton from '@/components/ReturnButton'
 import ApproveListingButton from '@/components/ApproveListingButton'
 import ChatButton from '@/components/ChatButton'
 import KycReviewRow from '@/components/KycReviewRow'
+import VaultImage from '@/components/VaultImage'
 
 export const dynamic = 'force-dynamic'
 
@@ -199,28 +200,21 @@ export default async function OperatorPage() {
                   className="vault-card-3d rounded-2xl p-5 flex justify-between items-center gap-4"
                 >
                   <div className="flex items-center gap-4">
-                    {item?.photos?.[0] ? (
-                      <Image
-                        src={item.photos[0]}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="w-16 h-16 object-cover rounded-xl border border-slate-200"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
+                    <VaultImage
+                      src={resolveItemPhotoUrl(item?.name, item?.category, item?.photos)}
+                      fallbackSrc={getFallbackItemPhoto(item?.name, item?.category)}
+                      alt={item?.name ?? 'Pending item'}
+                      width={64}
+                      height={64}
+                      className="w-16 h-16 object-cover rounded-xl border border-slate-200 shrink-0"
+                    />
                     <div>
                       <p className="font-bold text-slate-900 text-lg">{item?.name ?? 'Unknown Item'}</p>
                       <p className="text-xs text-slate-600 font-medium mt-0.5">
                         {item?.category} · Owner: {owner?.full_name ?? 'Unknown'}
                       </p>
                       <p className="text-sm font-bold text-slate-900 mt-1.5 tabular-nums">
-                        ₹{listing.rate_per_day}/day · Deposit ₹{listing.deposit}
+                        ₹{listing.rate_per_day.toLocaleString('en-IN')}/day · Deposit ₹{listing.deposit.toLocaleString('en-IN')}
                       </p>
                     </div>
                   </div>

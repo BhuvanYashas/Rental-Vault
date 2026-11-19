@@ -84,7 +84,7 @@ export default function ReturnedRentalRow({
                 Intake
               </span>
               {intakePhoto ? (
-                <Image src={intakePhoto} alt="Intake" fill className="object-cover" />
+                <Image src={intakePhoto} alt="Intake" fill referrerPolicy="no-referrer" className="object-cover" />
               ) : (
                 <span className="text-slate-400 text-xs">No Image</span>
               )}
@@ -94,7 +94,7 @@ export default function ReturnedRentalRow({
                 Return
               </span>
               {returnPhoto ? (
-                <Image src={returnPhoto} alt="Return" fill className="object-cover" />
+                <Image src={returnPhoto} alt="Return" fill referrerPolicy="no-referrer" className="object-cover" />
               ) : (
                 <span className="text-slate-400 text-xs">No Image</span>
               )}

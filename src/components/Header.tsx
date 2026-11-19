@@ -97,6 +97,36 @@ export default async function Header() {
           )}
         </div>
       </div>
+
+      {/* Mobile Navigation Bar */}
+      <nav
+        aria-label="Mobile navigation"
+        className="md:hidden border-t border-slate-800/80 px-5 py-2 flex items-center gap-4 overflow-x-auto text-xs font-semibold text-slate-200"
+      >
+        <Link href="/" className="hover:text-white transition-colors whitespace-nowrap shrink-0 py-1">
+          Browse
+        </Link>
+        {user ? (
+          <>
+            <Link href="/my-rentals" className="hover:text-white transition-colors whitespace-nowrap shrink-0 py-1">
+              My Rentals
+            </Link>
+            <Link href="/owner/dashboard" className="hover:text-white transition-colors whitespace-nowrap shrink-0 py-1">
+              My Items
+            </Link>
+            <Link
+              href="/owner/new-item"
+              className="ml-auto text-[#FB923C] hover:text-white font-bold transition-colors whitespace-nowrap shrink-0 py-1"
+            >
+              + List Item
+            </Link>
+          </>
+        ) : (
+          <Link href="/login?mode=signup" className="hover:text-white transition-colors whitespace-nowrap shrink-0 py-1">
+            Create Account
+          </Link>
+        )}
+      </nav>
     </header>
   )
 }

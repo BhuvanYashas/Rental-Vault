@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, hasSupabaseEnv } from '@/lib/supabase/server'
+import { getFallbackItemPhoto, resolveItemPhotoUrl } from '@/lib/itemPhotos'
+import { getPreviewListingById } from '@/lib/mockCatalog'
 import RentButton from '@/components/RentButton'
+import VaultImage from '@/components/VaultImage'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -13,6 +15,17 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const { id } = await params
+
+  if (!hasSupabaseEnv()) {
+    const preview = getPreviewListingById(id)
+    if (!preview || !preview.items) {
+      return { title: 'Item Not Found | Rental Vault' }
+    }
+    const title = `${preview.items.name} — ₹${preview.rate_per_day}/day | Rental Vault`
+    const description = `Rent a ${preview.items.name} (${preview.items.category}) on Rental Vault. Verified, insured, and escrowed.`
+    return { title, description }
+  }
+
   const supabase = await createClient()
 
   const { data } = await supabase
@@ -31,7 +44,7 @@ export async function generateMetadata({
   const item = data.items as unknown as { name: string; category: string; photos?: string[] | null }
   const title = `${item.name} — ₹${data.rate_per_day}/day | Rental Vault`
   const description = `Rent a ${item.name} (${item.category}) on Rental Vault. Verified, insured, and escrowed.`
-  const imageUrl = item.photos?.[0]
+  const imageUrl = resolveItemPhotoUrl(item.name, item.category, item.photos)
 
   return {
     title,
@@ -57,27 +70,14 @@ export default async function ListingDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('listings')
-    .select(`
-      id, rate_per_day, deposit, active,
-      items ( id, owner_id, name, category, grade, state, serial_number, photos, average_rating, review_count )
-    `)
-    .eq('id', id)
-
-  if (error || !data || data.length === 0) notFound()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  let walletBalance = 0
-  if (user) {
-    const { data: profile } = await supabase.from('profiles').select('wallet_balance').eq('id', user.id).single()
-    walletBalance = profile?.wallet_balance || 0
+  let listing: {
+    id: string
+    rate_per_day: number
+    deposit: number
+    active: boolean
   }
-
-  const listing = data[0]
-  const item = listing.items as unknown as {
+  let item: {
     id: string
     owner_id: string | null
     name: string
@@ -90,43 +90,128 @@ export default async function ListingDetailPage({
     average_rating: number | null
     review_count: number | null
   }
+  let user: { id: string } | null = null
+  let walletBalance = 0
+  let reviewsList: Array<{
+    id: string
+    rating: number
+    comment: string | null
+    created_at: string
+    reviewer_name: string
+  }> = []
+  let custodyEventsList: Array<{
+    id: string
+    state: string
+    notes: string | null
+    created_at: string
+  }> = []
+
+  if (!hasSupabaseEnv()) {
+    const preview = getPreviewListingById(id)
+    if (!preview || !preview.items) notFound()
+
+    listing = {
+      id: preview.id,
+      rate_per_day: preview.rate_per_day,
+      deposit: preview.deposit,
+      active: preview.active,
+    }
+    item = {
+      id: preview.items.id,
+      owner_id: preview.items.owner_id,
+      name: preview.items.name,
+      category: preview.items.category,
+      grade: preview.items.grade,
+      state: preview.items.state,
+      serial_number: preview.items.serial_number,
+      photos: preview.items.photos,
+      notes: preview.notes,
+      average_rating: preview.items.average_rating ?? null,
+      review_count: preview.items.review_count ?? null,
+    }
+    reviewsList = preview.reviews
+    custodyEventsList = preview.custody_events
+  } else {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from('listings')
+      .select(`
+        id, rate_per_day, deposit, active,
+        items ( id, owner_id, name, category, grade, state, serial_number, photos, average_rating, review_count )
+      `)
+      .eq('id', id)
+
+    if (error || !data || data.length === 0) notFound()
+
+    const authResult = await supabase.auth.getUser()
+    user = authResult.data.user
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('wallet_balance').eq('id', user.id).single()
+      walletBalance = profile?.wallet_balance || 0
+    }
+
+    const row = data[0]
+    listing = {
+      id: row.id,
+      rate_per_day: row.rate_per_day,
+      deposit: row.deposit,
+      active: row.active,
+    }
+    item = row.items as unknown as typeof item
+
+    const [{ data: itemReviews }, { data: custodyEvents }, { data: notesRow }] = await Promise.all([
+      supabase
+        .from('reviews')
+        .select('id, rating, comment, created_at, reviewer_id')
+        .eq('item_id', item.id)
+        .order('created_at', { ascending: false })
+        .limit(6),
+      supabase
+        .from('custody_events')
+        .select('id, state, notes, created_at')
+        .eq('item_id', item.id)
+        .order('created_at', { ascending: false })
+        .limit(8),
+      supabase
+        .from('items')
+        .select('notes')
+        .eq('id', item.id)
+        .maybeSingle(),
+    ])
+
+    item.notes = (notesRow as { notes?: string | null } | null)?.notes ?? null
+
+    const reviewerIds = Array.from(
+      new Set((itemReviews ?? []).map((r) => r.reviewer_id).filter(Boolean)),
+    )
+    const { data: reviewerProfiles } = reviewerIds.length
+      ? await supabase.from('profiles').select('id, username, full_name').in('id', reviewerIds)
+      : { data: [] }
+    const reviewerMap = new Map(
+      (reviewerProfiles ?? []).map((p) => [p.id, p.username || p.full_name || 'Verified Renter']),
+    )
+
+    reviewsList = (itemReviews ?? []).map((rev) => ({
+      id: rev.id,
+      rating: rev.rating,
+      comment: rev.comment,
+      created_at: rev.created_at,
+      reviewer_name: rev.reviewer_id ? reviewerMap.get(rev.reviewer_id) || 'Verified Renter' : 'Verified Renter',
+    }))
+
+    custodyEventsList = (custodyEvents ?? []).map((evt) => ({
+      id: evt.id,
+      state: evt.state,
+      notes: evt.notes,
+      created_at: evt.created_at,
+    }))
+  }
 
   const isOwner = Boolean(user && item.owner_id && user.id === item.owner_id)
-
-  const [{ data: itemReviews }, { data: custodyEvents }, { data: notesRow }] = await Promise.all([
-    supabase
-      .from('reviews')
-      .select('id, rating, comment, created_at, reviewer_id')
-      .eq('item_id', item.id)
-      .order('created_at', { ascending: false })
-      .limit(6),
-    supabase
-      .from('custody_events')
-      .select('id, state, notes, created_at')
-      .eq('item_id', item.id)
-      .order('created_at', { ascending: false })
-      .limit(8),
-    supabase
-      .from('items')
-      .select('notes')
-      .eq('id', item.id)
-      .maybeSingle(),
-  ])
-
-  const ownerNotes = (notesRow as { notes?: string | null } | null)?.notes ?? null
-  item.notes = ownerNotes
-
-  const reviewerIds = Array.from(
-    new Set((itemReviews ?? []).map((r) => r.reviewer_id).filter(Boolean)),
-  )
-  const { data: reviewerProfiles } = reviewerIds.length
-    ? await supabase.from('profiles').select('id, username, full_name').in('id', reviewerIds)
-    : { data: [] }
-  const reviewerMap = new Map(
-    (reviewerProfiles ?? []).map((p) => [p.id, p.username || p.full_name || 'Verified Renter']),
-  )
-
-  const mainPhoto = item.photos?.[0]
+  const mainPhoto = resolveItemPhotoUrl(item.name, item.category, item.photos)
+  const fallbackPhoto = getFallbackItemPhoto(item.name, item.category)
+  const extraPhotos = (item.photos ?? []).slice(1).filter(Boolean)
 
   return (
     <main className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-10 py-8 md:py-10 space-y-8">
@@ -144,25 +229,36 @@ export default async function ListingDetailPage({
         <div className="lg:col-span-2 flex flex-col">
           <div className="vault-card-3d rounded-3xl p-6 md:p-8 flex flex-col h-full gap-6">
             <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 vault-inset-3d">
-              {mainPhoto ? (
-                <Image
-                  src={mainPhoto}
-                  alt={item.name}
-                  fill
-                  priority
-                  referrerPolicy="no-referrer"
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 66vw"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 gap-2">
-                  <svg aria-hidden="true" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
-                  </svg>
-                  <span className="text-sm font-medium text-slate-500">Photo verified at vault intake</span>
-                </div>
-              )}
+              <VaultImage
+                src={mainPhoto}
+                fallbackSrc={fallbackPhoto}
+                alt={item.name}
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 66vw"
+              />
             </div>
+
+            {extraPhotos.length > 0 && (
+              <div className="grid grid-cols-4 gap-3">
+                {extraPhotos.slice(0, 4).map((url, idx) => (
+                  <div
+                    key={url + idx}
+                    className="relative aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-slate-100"
+                  >
+                    <VaultImage
+                      src={url}
+                      fallbackSrc={fallbackPhoto}
+                      alt={`${item.name} view ${idx + 2}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 25vw, 15vw"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -236,7 +332,7 @@ export default async function ListingDetailPage({
             <div className="mb-5">
               <p className="text-xs font-mono uppercase tracking-wider font-bold text-slate-500 mb-1">Rental Rate</p>
               <div className="flex items-baseline gap-1 tabular-nums">
-                <span className="text-4xl font-black text-[#0F172A]">₹{listing.rate_per_day}</span>
+                <span className="text-4xl font-black text-[#0F172A]">₹{listing.rate_per_day.toLocaleString('en-IN')}</span>
                 <span className="text-base text-slate-600 font-semibold">/day</span>
               </div>
             </div>
@@ -246,7 +342,7 @@ export default async function ListingDetailPage({
                 <p className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold">Refundable</p>
                 <p className="text-sm font-bold text-[#0F172A]">Security Deposit</p>
               </div>
-              <p className="text-xl font-bold text-[#0F172A] tabular-nums">₹{listing.deposit}</p>
+              <p className="text-xl font-bold text-[#0F172A] tabular-nums">₹{listing.deposit.toLocaleString('en-IN')}</p>
             </div>
 
             {!listing.active ? (
@@ -321,7 +417,7 @@ export default async function ListingDetailPage({
             )}
           </div>
 
-          {!itemReviews || itemReviews.length === 0 ? (
+          {reviewsList.length === 0 ? (
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center">
               <p className="text-sm font-bold text-slate-700">No verified reviews yet</p>
               <p className="text-xs text-slate-500 mt-1">
@@ -330,11 +426,11 @@ export default async function ListingDetailPage({
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {itemReviews.map((rev) => (
+              {reviewsList.map((rev) => (
                 <div key={rev.id} className="py-4 first:pt-0 last:pb-0">
                   <div className="flex items-center justify-between gap-3 mb-1.5">
                     <span className="text-sm font-bold text-[#0F172A]">
-                      {rev.reviewer_id ? reviewerMap.get(rev.reviewer_id) || 'Verified Renter' : 'Verified Renter'}
+                      {rev.reviewer_name}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-amber-600 tabular-nums">
@@ -358,11 +454,11 @@ export default async function ListingDetailPage({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-extrabold text-[#0F172A]">Vault Custody Provenance</h2>
             <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md tabular-nums">
-              {custodyEvents?.length ?? 0} event{(custodyEvents?.length ?? 0) === 1 ? '' : 's'}
+              {custodyEventsList.length} event{custodyEventsList.length === 1 ? '' : 's'}
             </span>
           </div>
 
-          {!custodyEvents || custodyEvents.length === 0 ? (
+          {custodyEventsList.length === 0 ? (
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center">
               <p className="text-sm font-bold text-slate-700">No custody events logged yet</p>
               <p className="text-xs text-slate-500 mt-1">
@@ -371,7 +467,7 @@ export default async function ListingDetailPage({
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {custodyEvents.map((evt) => (
+              {custodyEventsList.map((evt) => (
                 <div key={evt.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
                   <div>
                     <span className="inline-block font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
